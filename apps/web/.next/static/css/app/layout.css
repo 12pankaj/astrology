@@ -1,0 +1,82 @@
+/*!*****************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./src/app/globals.css ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************/
+:root {
+  --bg-primary: #07090E;
+  --bg-surface: #0E131F;
+  --bg-card: rgba(18, 24, 38, 0.7);
+  --border-gold: rgba(212, 175, 55, 0.3);
+  --accent-gold: #D4AF37;
+  --accent-gold-bright: #FFD700;
+  --accent-amber: #FF9F1C;
+  --text-main: #F1F5F9;
+  --text-muted: #94A3B8;
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  min-height: 100vh;
+  line-height: 1.5;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(255, 159, 28, 0.05) 0%, transparent 40%);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-gold);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(212, 175, 55, 0.6);
+  transform: translateY(-2px);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+  color: #000;
+  font-weight: 700;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+  transition: opacity 0.2s ease;
+}
+
+.btn-gold:hover {
+  opacity: 0.9;
+}
+
+.badge-gold {
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--accent-gold-bright);
+  border: 1px solid var(--border-gold);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.grid-cols-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-gap: 24px;
+  gap: 24px;
+}
+

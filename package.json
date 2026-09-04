@@ -1,0 +1,21 @@
+{
+  "name": "vedic-astro-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Enterprise-Grade Vedic Astrology (Jyotish) Monorepo Platform",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm --recursive run build",
+    "test": "pnpm --recursive run test",
+    "dev": "pnpm --parallel --recursive run dev",
+    "lint": "pnpm --recursive run lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
