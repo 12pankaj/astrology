@@ -27,7 +27,7 @@ const ASHTAKAVARGA_RULES: Record<string, Record<string, number[]>> = {
     Sun: [1, 2, 4, 7, 8, 9, 10, 11],       // 8
     Moon: [3, 6, 10, 11],                  // 4
     Mars: [1, 2, 4, 7, 8, 9, 10, 11],       // 8
-    Mercury: [1, 3, 5, 6, 9, 10, 11],      // 7
+    Mercury: [3, 5, 6, 9, 10, 11, 12],      // 7
     Jupiter: [5, 6, 9, 11],                // 4
     Venus: [6, 7, 12],                     // 3
     Saturn: [1, 2, 4, 7, 8, 9, 10, 11],      // 8
@@ -177,3 +177,158 @@ export function calculateAshtakavarga(kundli: KundliData): AshtakavargaResult {
     houseStrengths
   };
 }
+
+// -------------------------------------------------------------
+// Classical Parashari Ashtakavarga Shodhana (अष्टकवर्ग शोधन)
+// -------------------------------------------------------------
+
+// 1. Trikona Shodhana (त्रिकोण शोधन - Reduction of Trines)
+// Trines: (1, 5, 9) -> [0, 4, 8], (2, 6, 10) -> [1, 5, 9], (3, 7, 11) -> [2, 6, 10], (4, 8, 12) -> [3, 7, 11]
+export function performTrikonaShodhana(points: number[]): number[] {
+  const result = [...points];
+  const trines = [
+    [0, 4, 8],  // Fire
+    [1, 5, 9],  // Earth
+    [2, 6, 10], // Air
+    [3, 7, 11]  // Water
+  ];
+
+  trines.forEach(([r1, r2, r3]) => {
+    const minVal = Math.min(result[r1], result[r2], result[r3]);
+    result[r1] -= minVal;
+    result[r2] -= minVal;
+    result[r3] -= minVal;
+  });
+
+  return result;
+}
+
+// 2. Ekadhipatya Shodhana (एकाधिपत्य शोधन - Dual Sign Ownership Reduction)
+// Mars: 0 & 7, Venus: 1 & 6, Mercury: 2 & 5, Jupiter: 8 & 11, Saturn: 9 & 10 (Sun: 4, Moon: 3 exempt)
+export function performEkadhipatyaShodhana(points: number[], planetsInRashi: number[][]): number[] {
+  const result = [...points];
+  const dualPairs = [
+    [0, 7],   // Mars (Mesha & Vrishchika)
+    [1, 6],   // Venus (Vrishabha & Tula)
+    [2, 5],   // Mercury (Mithuna & Kanya)
+    [8, 11],  // Jupiter (Dhanu & Meena)
+    [9, 10]   // Saturn (Makara & Kumbha)
+  ];
+
+  dualPairs.forEach(([s1, s2]) => {
+    const occ1 = planetsInRashi[s1].length > 0;
+    const occ2 = planetsInRashi[s2].length > 0;
+    const p1 = result[s1];
+    const p2 = result[s2];
+
+    // Case 1: Planets in both signs -> No reduction
+    if (occ1 && occ2) return;
+
+    // Case 2: One sign occupied, one unoccupied
+    if (occ1 && !occ2) {
+      if (p2 > p1) result[s2] = p1;
+      else result[s2] = 0;
+      return;
+    }
+    if (!occ1 && occ2) {
+      if (p1 > p2) result[s1] = p2;
+      else result[s1] = 0;
+      return;
+    }
+
+    // Case 3: Both signs unoccupied by planets
+    if (!occ1 && !occ2) {
+      if (p1 === p2) {
+        result[s1] = 0;
+        result[s2] = 0;
+      } else {
+        const minVal = Math.min(p1, p2);
+        result[s1] = minVal;
+        result[s2] = minVal;
+      }
+    }
+  });
+
+  return result;
+}
+
+// 3. Shodhita Pinda (शोध्य पिण्ड - Rashi Pinda + Graha Pinda)
+// Classical Rashi Multipliers (राशि मान):
+const RASHI_MULTIPLIERS = [7, 10, 8, 4, 10, 5, 7, 8, 9, 5, 11, 12];
+// Classical Graha Multipliers (ग्रह मान):
+const GRAHA_MULTIPLIERS: Record<string, number> = {
+  Sun: 5, Moon: 5, Mars: 8, Mercury: 5, Jupiter: 10, Venus: 7, Saturn: 5
+};
+
+export function calculatePindaShodhana(
+  shodhitaPoints: number[],
+  planetPlacements: Record<string, number>
+): { rashiPinda: number; grahaPinda: number; shodhitaPinda: number } {
+  // Rashi Pinda = Sum of (reduced point * rashi multiplier)
+  let rashiPinda = 0;
+  for (let i = 0; i < 12; i++) {
+    rashiPinda += shodhitaPoints[i] * RASHI_MULTIPLIERS[i];
+  }
+
+  // Graha Pinda = Sum of (reduced point of planet's sign * planet multiplier)
+  let grahaPinda = 0;
+  Object.entries(GRAHA_MULTIPLIERS).forEach(([planet, mult]) => {
+    const rIdx = planetPlacements[planet];
+    if (rIdx !== undefined) {
+      grahaPinda += shodhitaPoints[rIdx] * mult;
+    }
+  });
+
+  return {
+    rashiPinda,
+    grahaPinda,
+    shodhitaPinda: rashiPinda + grahaPinda
+  };
+}
+
+export function calculateFullAshtakavargaShodhana(kundli: KundliData) {
+  const av = calculateAshtakavarga(kundli);
+
+  // Map planets in each rashi
+  const planetsInRashi: number[][] = Array.from({ length: 12 }, () => []);
+  const planetPlacements: Record<string, number> = {};
+
+  kundli.planets.forEach((p) => {
+    planetsInRashi[p.rashiIndex].push(p.rashiIndex);
+    planetPlacements[p.planet] = p.rashiIndex;
+  });
+
+  const trikonaResults = av.bhinnaAshtakavarga.map((bav) => {
+    const after = performTrikonaShodhana(bav.pointsPerRashi);
+    return {
+      planet: bav.planet,
+      pointsBefore: bav.pointsPerRashi,
+      pointsAfter: after
+    };
+  });
+
+  const ekadhipatyaResults = trikonaResults.map((tr) => {
+    const after = performEkadhipatyaShodhana(tr.pointsAfter, planetsInRashi);
+    return {
+      planet: tr.planet,
+      pointsBefore: tr.pointsAfter,
+      pointsAfter: after
+    };
+  });
+
+  const pindaResults = ekadhipatyaResults.map((er) => {
+    const pinda = calculatePindaShodhana(er.pointsAfter, planetPlacements);
+    return {
+      planet: er.planet,
+      ...pinda
+    };
+  });
+
+  return {
+    rawAshtakavarga: av,
+    trikonaShodhana: trikonaResults,
+    ekadhipatyaShodhana: ekadhipatyaResults,
+    pindaShodhana: pindaResults
+  };
+}
+

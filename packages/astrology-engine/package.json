@@ -10,8 +10,8 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@vedic-astro/config": "*",
-    "@vedic-astro/types": "*"
+    "@vedic-astro/config": "workspace:*",
+    "@vedic-astro/types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

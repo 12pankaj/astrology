@@ -14,114 +14,133 @@ const MAHADASHA_YEARS: Record<string, number> = {
 };
 
 const DASHA_ORDER = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+const MS_PER_YEAR = 365.2425 * 86400000;
+
+function toIsoDate(d: Date): string {
+  return d.toISOString().split('T')[0];
+}
 
 export function calculateVimshottariDasha(kundli: KundliData, birthIsoDate: string): VimshottariDashaResult {
   const moon = kundli.planets.find((p) => p.planet === 'Moon')!;
   const moonLord = moon.nakshatraLord;
   const startIdx = DASHA_ORDER.indexOf(moonLord);
 
-  // Fraction of Nakshatra remaining
-  const nakshatraSpan = 360 / 27; // 13.3333 degrees
+  // Fraction of Nakshatra remaining at birth
+  const nakshatraSpan = 360 / 27; // 13°20' = 13.333333°
   const moonDegInNak = moon.longitude % nakshatraSpan;
   const fractionElapsed = moonDegInNak / nakshatraSpan;
   const fractionRemaining = 1 - fractionElapsed;
 
   const birthDate = new Date(birthIsoDate);
-  let currentDate = new Date(birthDate);
+  const birthTimeMs = birthDate.getTime();
 
-  const initialDashaYears = MAHADASHA_YEARS[moonLord] * fractionRemaining;
   const timeline: DashaPeriod[] = [];
+
+  // Total duration of birth Mahadasha
+  const firstMahaLord = moonLord;
+  const firstMahaTotalYears = MAHADASHA_YEARS[firstMahaLord];
+  const firstMahaElapsedYears = firstMahaTotalYears * fractionElapsed;
+  const firstMahaRemainingYears = firstMahaTotalYears * fractionRemaining;
+
+  // True start date of the first Mahadasha before birth
+  const firstMahaStartMs = birthTimeMs - firstMahaElapsedYears * MS_PER_YEAR;
+
+  let currentMahaStartMs = firstMahaStartMs;
 
   for (let i = 0; i < 9; i++) {
     const lordIdx = (startIdx + i) % 9;
     const lord = DASHA_ORDER[lordIdx];
-    const duration = i === 0 ? initialDashaYears : MAHADASHA_YEARS[lord];
+    const fullMahaYears = MAHADASHA_YEARS[lord];
+    const fullMahaEndMs = currentMahaStartMs + fullMahaYears * MS_PER_YEAR;
 
-    const startDate = new Date(currentDate);
-    const endDate = new Date(startDate);
-    endDate.setFullYear(endDate.getFullYear() + Math.floor(duration));
-    endDate.setMonth(endDate.getMonth() + Math.floor((duration % 1) * 12));
+    // For the birth Mahadasha, display starts from birth date
+    const displayStartMs = i === 0 ? birthTimeMs : currentMahaStartMs;
+    const displayDurationYears = (fullMahaEndMs - displayStartMs) / MS_PER_YEAR;
 
-    // 2nd Level: Antardasha
+    // Compute Antardashas (Sub-periods)
     const subPeriods: DashaPeriod[] = [];
-    let subCurrentDate = new Date(startDate);
+    let currentAntarStartMs = currentMahaStartMs;
 
     for (let j = 0; j < 9; j++) {
       const subLordIdx = (lordIdx + j) % 9;
       const subLord = DASHA_ORDER[subLordIdx];
-      const subDurationYears = (MAHADASHA_YEARS[lord] * MAHADASHA_YEARS[subLord]) / 120;
+      const antarDurationYears = (fullMahaYears * MAHADASHA_YEARS[subLord]) / 120;
+      const antarEndMs = currentAntarStartMs + antarDurationYears * MS_PER_YEAR;
 
-      const subStartDate = new Date(subCurrentDate);
-      const subEndDate = new Date(subStartDate);
-      subEndDate.setDate(subEndDate.getDate() + Math.floor(subDurationYears * 365.25));
+      // Check if this Antardasha is relevant for the native's lifetime
+      if (antarEndMs > birthTimeMs) {
+        const displayAntarStartMs = Math.max(currentAntarStartMs, birthTimeMs);
+        const displayAntarDurationYears = (antarEndMs - displayAntarStartMs) / MS_PER_YEAR;
 
-      // 3rd Level: Pratyantardasha
-      const pratyantarPeriods: DashaPeriod[] = [];
-      let pratCurrentDate = new Date(subStartDate);
+        // Compute Pratyantardashas (3rd level)
+        const pratyantarPeriods: DashaPeriod[] = [];
+        let currentPratStartMs = currentAntarStartMs;
 
-      for (let k = 0; k < 9; k++) {
-        const pratLordIdx = (subLordIdx + k) % 9;
-        const pratLord = DASHA_ORDER[pratLordIdx];
-        const pratDurationDays = (subDurationYears * 365.25 * MAHADASHA_YEARS[pratLord]) / 120;
+        for (let k = 0; k < 9; k++) {
+          const pratLordIdx = (subLordIdx + k) % 9;
+          const pratLord = DASHA_ORDER[pratLordIdx];
+          const pratDurationYears = (antarDurationYears * MAHADASHA_YEARS[pratLord]) / 120;
+          const pratEndMs = currentPratStartMs + pratDurationYears * MS_PER_YEAR;
 
-        const pratStartDate = new Date(pratCurrentDate);
-        const pratEndDate = new Date(pratStartDate);
-        pratEndDate.setDate(pratEndDate.getDate() + Math.floor(pratDurationDays));
+          if (pratEndMs > birthTimeMs) {
+            const displayPratStartMs = Math.max(currentPratStartMs, birthTimeMs);
+            const displayPratDurationYears = (pratEndMs - displayPratStartMs) / MS_PER_YEAR;
 
-        // 4th Level: Sukshmadasha
-        const sukshmaPeriods: DashaPeriod[] = [];
-        let sukCurrentDate = new Date(pratStartDate);
+            // Sukshmadashas (4th level)
+            const sukshmaPeriods: DashaPeriod[] = [];
+            let currentSukStartMs = currentPratStartMs;
 
-        for (let l = 0; l < 9; l++) {
-          const sukLordIdx = (pratLordIdx + l) % 9;
-          const sukLord = DASHA_ORDER[sukLordIdx];
-          const sukDurationDays = (pratDurationDays * MAHADASHA_YEARS[sukLord]) / 120;
+            for (let l = 0; l < 9; l++) {
+              const sukLordIdx = (pratLordIdx + l) % 9;
+              const sukLord = DASHA_ORDER[sukLordIdx];
+              const sukDurationYears = (pratDurationYears * MAHADASHA_YEARS[sukLord]) / 120;
+              const sukEndMs = currentSukStartMs + sukDurationYears * MS_PER_YEAR;
 
-          const sukStartDate = new Date(sukCurrentDate);
-          const sukEndDate = new Date(sukStartDate);
-          sukEndDate.setHours(sukEndDate.getHours() + Math.floor(sukDurationDays * 24));
+              if (sukEndMs > birthTimeMs) {
+                const displaySukStartMs = Math.max(currentSukStartMs, birthTimeMs);
+                sukshmaPeriods.push({
+                  planet: sukLord,
+                  startDate: toIsoDate(new Date(displaySukStartMs)),
+                  endDate: toIsoDate(new Date(sukEndMs)),
+                  durationYears: (sukEndMs - displaySukStartMs) / MS_PER_YEAR
+                });
+              }
+              currentSukStartMs = sukEndMs;
+            }
 
-          sukshmaPeriods.push({
-            planet: sukLord,
-            startDate: sukStartDate.toISOString().split('T')[0],
-            endDate: sukEndDate.toISOString().split('T')[0],
-            durationYears: sukDurationDays / 365.25
-          });
+            pratyantarPeriods.push({
+              planet: pratLord,
+              startDate: toIsoDate(new Date(displayPratStartMs)),
+              endDate: toIsoDate(new Date(pratEndMs)),
+              durationYears: displayPratDurationYears,
+              subPeriods: sukshmaPeriods
+            });
+          }
 
-          sukCurrentDate = sukEndDate;
+          currentPratStartMs = pratEndMs;
         }
 
-        pratyantarPeriods.push({
-          planet: pratLord,
-          startDate: pratStartDate.toISOString().split('T')[0],
-          endDate: pratEndDate.toISOString().split('T')[0],
-          durationYears: pratDurationDays / 365.25,
-          subPeriods: sukshmaPeriods
+        subPeriods.push({
+          planet: subLord,
+          startDate: toIsoDate(new Date(displayAntarStartMs)),
+          endDate: toIsoDate(new Date(antarEndMs)),
+          durationYears: displayAntarDurationYears,
+          subPeriods: pratyantarPeriods
         });
-
-        pratCurrentDate = pratEndDate;
       }
 
-      subPeriods.push({
-        planet: subLord,
-        startDate: subStartDate.toISOString().split('T')[0],
-        endDate: subEndDate.toISOString().split('T')[0],
-        durationYears: subDurationYears,
-        subPeriods: pratyantarPeriods
-      });
-
-      subCurrentDate = subEndDate;
+      currentAntarStartMs = antarEndMs;
     }
 
     timeline.push({
       planet: lord,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      durationYears: duration,
+      startDate: toIsoDate(new Date(displayStartMs)),
+      endDate: toIsoDate(new Date(fullMahaEndMs)),
+      durationYears: displayDurationYears,
       subPeriods
     });
 
-    currentDate = endDate;
+    currentMahaStartMs = fullMahaEndMs;
   }
 
   const now = new Date();
@@ -133,7 +152,7 @@ export function calculateVimshottariDasha(kundli: KundliData, birthIsoDate: stri
     currentMahadasha: currentMaha.planet,
     currentAntardasha: currentAntar?.planet || currentMaha.planet,
     currentPratyantardasha: currentPrat?.planet || 'Mercury',
-    dashaBalanceAtBirthYears: initialDashaYears,
+    dashaBalanceAtBirthYears: firstMahaRemainingYears,
     timeline
   };
 }

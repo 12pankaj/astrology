@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { calculateKundli, calculateDailyPanchang, calculateAshtakootaMatching, calculateDivisionalCharts, calculateVimshottariDasha, D1_D60_EXPLANATIONS, predictMarriageDetails, predictCareerDetails, predictMarriageDetailsDeep, predictCareerDetailsDeep, getDivisionalChartDeepExplanation, generateDetailedPlanetImpacts, detectStelliumsAndYogas, detectVedicDoshasAndRemedies, calculateAshtakavarga, calculateVarshphal, analyzeDetailedCareerByPlanets, PLANET_CAREER_MAPPINGS, ZODIAC_CAREER_MAPPINGS, predictPromotionAndIncrementTiming, calculateNumerologyDetails } from '@vedic-astro/astrology-engine';
+import { calculateKundli, calculateDailyPanchang, calculateAshtakootaMatching, calculateDivisionalCharts, calculateVimshottariDasha, D1_D60_EXPLANATIONS, predictMarriageDetails, predictCareerDetails, predictMarriageDetailsDeep, predictCareerDetailsDeep, getDivisionalChartDeepExplanation, generateDetailedPlanetImpacts, detectStelliumsAndYogas, detectVedicDoshasAndRemedies, calculateAshtakavarga, calculateVarshphal, analyzeDetailedCareerByPlanets, PLANET_CAREER_MAPPINGS, ZODIAC_CAREER_MAPPINGS, predictPromotionAndIncrementTiming, calculateNumerologyDetails, calculateAdvancedNumerology, analyzeVibrationNumber, NUMEROLOGY_PROFILES, detectComprehensiveRajYogas, RajYogaDetail, generateFullKundliReport } from '@vedic-astro/astrology-engine';
 import { NorthIndianChart, SouthIndianChart } from '@vedic-astro/ui';
 import { KundliData, PanchangData, AshtakootaMatchingResult, DivisionalChart, VimshottariDashaResult } from '@vedic-astro/types';
 
 export default function HomePage() {
   // Navigation Tabs
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'kundli' | 'predictions' | 'numerology' | 'matching' | 'panchang' | 'astrologers' | 'admin'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'kundli' | 'predictions' | 'numerology' | 'matching' | 'panchang' | 'astrologers' | 'admin' | 'report'>('dashboard');
 
   // Kundli Input State (Updated default DOB: 2002-02-01, TOB: 06:55)
   const [dob, setDob] = useState('2002-02-01');
@@ -32,6 +32,63 @@ export default function HomePage() {
   const [userLocationName, setUserLocationName] = useState<string>('Ajmer, Rajasthan');
   const [showAllPlanetsCareer, setShowAllPlanetsCareer] = useState(false);
   const [careerGuideViewMode, setCareerGuideViewMode] = useState<'planets' | 'zodiac'>('planets');
+  const [activeChatAstro, setActiveChatAstro] = useState<string | null>(null);
+  const [rajYogaCategoryFilter, setRajYogaCategoryFilter] = useState<string>('ALL');
+  const [numerologyNameInput, setNumerologyNameInput] = useState<string>('Pankaj Sharma');
+  const [vibrationInput, setVibrationInput] = useState<string>('9876543210');
+  const [vibrationCategory, setVibrationCategory] = useState<'mobile' | 'vehicle' | 'house' | 'custom'>('mobile');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
+  const [reportSuccessMsg, setReportSuccessMsg] = useState<string | null>(null);
+
+  const handleDownloadPdf = async () => {
+    setIsGeneratingPdf(true);
+    setReportSuccessMsg(null);
+    try {
+      const response = await fetch('/api/report/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'PANKAJ DADHICH',
+          gender: 'Male',
+          dob,
+          tob,
+          place,
+          latitude: lat,
+          longitude: lng
+        })
+      });
+
+      if (!response.ok) throw new Error('PDF generation failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vedic_Kundli_Report_Pankaj_Dadhich.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setReportSuccessMsg('🎉 17-अध्यायी PDF रिपोर्ट सफलतापूर्वक डाउनलोड हो गई है!');
+    } catch (err: any) {
+      alert('PDF generation error: ' + err.message);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleOpenPrintPreview = () => {
+    const params = new URLSearchParams({
+      name: 'PANKAJ DADHICH',
+      gender: 'Male',
+      dob,
+      tob,
+      place,
+      lat: lat.toString(),
+      lng: lng.toString()
+    });
+    window.open(`/api/report/html?${params.toString()}`, '_blank');
+  };
 
   // Fetch real user geolocation on mount
   useEffect(() => {
@@ -221,6 +278,7 @@ export default function HomePage() {
       <div style={{ display: 'flex', gap: '12px', background: '#0E131F', padding: '10px 16px', borderRadius: '12px', border: '1px solid rgba(212,175,55,0.2)', overflowX: 'auto' }}>
         {[
           { id: 'dashboard', label: '🏠 Dashboard' },
+          { id: 'report', label: '📜 17-Chapter Kundli Report (PDF)' },
           { id: 'kundli', label: '🔮 Janam Kundli' },
           { id: 'predictions', label: '📖 Life Guidance & Predictions' },
           { id: 'numerology', label: '🔢 Numerology (अंकशास्त्र)' },
@@ -282,6 +340,10 @@ export default function HomePage() {
 
           {/* Quick Actions Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+            <div className="glass-card" style={{ cursor: 'pointer', border: '1px solid #D4AF37', background: 'radial-gradient(circle, rgba(212,175,55,0.15) 0%, rgba(14,19,31,0.9) 100%)' }} onClick={() => setActiveTab('report')}>
+              <h3 style={{ color: '#FCD34D' }}>📜 17-Chapter PDF Report</h3>
+              <p style={{ color: '#E2E8F0', fontSize: '0.85rem', marginTop: '6px' }}>सम्पूर्ण 17 अध्यायी जीवन दर्पण रिपोर्ट डाउनलोड करें (Headless Skia/PDF)</p>
+            </div>
             <div className="glass-card" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('kundli')}>
               <h3 style={{ color: '#FFD700' }}>🔮 View Janam Kundli</h3>
               <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: '6px' }}>DOB: {dob} | D1-D60 Charts</p>
@@ -302,6 +364,236 @@ export default function HomePage() {
               <h3 style={{ color: '#FFD700' }}>🧙 Talk to Astrologers</h3>
               <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: '6px' }}>Live Instant Chat Consultations</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 17-CHAPTER KUNDLI REPORT (PDF) TAB */}
+      {activeTab === 'report' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Hero Banner & Download Bar */}
+          <section className="glass-card" style={{ border: '2px solid #D4AF37', background: 'radial-gradient(circle, rgba(212,175,55,0.12) 0%, rgba(14,19,31,0.95) 100%)', padding: '24px 28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+              <div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+                  <span className="badge-gold">👑 Vedic Astro Golden Standard</span>
+                  <span style={{ color: '#94A3B8', fontSize: '0.85rem' }}>35+ Page Publication-Grade PDF</span>
+                </div>
+                <h1 style={{ fontSize: '2rem', margin: '0 0 6px 0', background: 'linear-gradient(90deg, #FFFFFF, #D4AF37)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  सम्पूर्ण 17-अध्यायी विस्तृत जन्मपत्री रिपोर्ट (Kundli PDF)
+                </h1>
+                <p style={{ color: '#CBD5E1', fontSize: '0.95rem', margin: 0, maxWidth: '750px' }}>
+                  अवकहड़ा चक्र, षोडशवर्ग चार्ट्स (D1-D60), 12 भावफल, जैमिनी चर कारक, विवाह व करियर विश्लेषण, साढ़े साती, राजयोग, महादशा फल एवं संपूर्ण वैदिक उपाय।
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px', fontSize: '0.85rem' }}>
+                  <span style={{ background: '#07090E', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.3)', color: '#FFD700' }}>
+                    जातक: <strong>PANKAJ DADHICH</strong>
+                  </span>
+                  <span style={{ background: '#07090E', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.3)', color: '#E2E8F0' }}>
+                    DOB: <strong>{dob} ({tob})</strong>
+                  </span>
+                  <span style={{ background: '#07090E', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.3)', color: '#4ADE80' }}>
+                    स्थान: <strong>{place}</strong>
+                  </span>
+                  <span style={{ background: '#07090E', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(212,175,55,0.3)', color: '#38BDF8' }}>
+                    लग्न: <strong>मकर</strong> | राशि: <strong>कन्या</strong> | नक्षत्र: <strong>उत्तराफाल्गुनी (2)</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={isGeneratingPdf}
+                  style={{
+                    padding: '14px 24px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
+                    fontWeight: 800,
+                    fontSize: '1rem',
+                    background: isGeneratingPdf ? '#475569' : 'linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #AA7C11 100%)',
+                    color: '#000',
+                    boxShadow: '0 4px 20px rgba(212,175,55,0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {isGeneratingPdf ? '⏳ Generating PDF (Headless Engine)...' : '📥 Download Full PDF Report (Skia/PDF)'}
+                </button>
+                <button
+                  onClick={handleOpenPrintPreview}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    border: '1px solid #D4AF37',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    background: 'transparent',
+                    color: '#FFD700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  🖨️ View Full Report in Browser & Print
+                </button>
+              </div>
+            </div>
+
+            {reportSuccessMsg && (
+              <div style={{ marginTop: '16px', padding: '10px 16px', background: 'rgba(16,185,129,0.2)', border: '1px solid #10B981', borderRadius: '8px', color: '#6EE7B7', fontWeight: 600, fontSize: '0.9rem' }}>
+                {reportSuccessMsg}
+              </div>
+            )}
+          </section>
+
+          {/* Report Interactive Overview Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+            
+            {/* 01: Core Kundli Charts */}
+            <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '10px', marginBottom: '14px' }}>
+                <h3 style={{ color: '#FCD34D', margin: 0 }}>01 प्रमुख कुंडलियां (Core Charts)</h3>
+                <span className="badge-gold">D1, चंद्र व D9</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+                <NorthIndianChart kundli={kundli} width={300} height={300} />
+                <div style={{ width: '100%', fontSize: '0.85rem', color: '#94A3B8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #1E293B' }}>
+                    <span>लग्न (Ascendant):</span>
+                    <strong style={{ color: '#FFD700' }}>मकर (Capricorn 10° 25')</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #1E293B' }}>
+                    <span>चंद्र राशि (Moon Sign):</span>
+                    <strong style={{ color: '#38BDF8' }}>कन्या (Virgo)</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                    <span>नक्षत्र व चरण:</span>
+                    <strong style={{ color: '#F8FAFC' }}>उत्तराफाल्गुनी (पाद 2 - सूर्य)</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 02: 3 Pillars & Avakahada Chakra */}
+            <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '10px', marginBottom: '14px' }}>
+                <h3 style={{ color: '#FCD34D', margin: 0 }}>02 अवकहड़ा चक्र एवं तीन आधार स्तंभ</h3>
+                <span className="badge-gold">पंचांग व मूल तत्व</span>
+              </div>
+              <table style={{ width: '100%', fontSize: '0.85rem', color: '#CBD5E1', borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>वर्ण (Varna):</td><td style={{ fontWeight: 'bold', color: '#F8FAFC' }}>वैश्य (Vaishya)</td></tr>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>वश्य (Vashya):</td><td>मानव / द्विपद</td></tr>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>योनि (Yoni):</td><td>गौ (Cow)</td></tr>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>गण (Gana):</td><td>मनुष्य (Manushya)</td></tr>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>नाड़ी (Nadi):</td><td>आदि (Aadi)</td></tr>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>पाया (Paya):</td><td style={{ color: '#A7F3D0', fontWeight: 'bold' }}>रजत / चाँदी (Silver)</td></tr>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>नामाक्षर:</td><td style={{ color: '#F59E0B', fontWeight: 'bold' }}>टो / To</td></tr>
+                  <tr style={{ borderBottom: '1px solid #1E293B' }}><td style={{ padding: '6px 0', color: '#94A3B8' }}>जन्म योग व करण:</td><td>अतिगण्ड / बव</td></tr>
+                  <tr><td style={{ padding: '6px 0', color: '#94A3B8' }}>सूर्य राशि (पाश्चात्य):</td><td>कुंभ (Aquarius)</td></tr>
+                </tbody>
+              </table>
+              <div style={{ marginTop: '12px', padding: '10px', background: '#090D16', borderRadius: '8px', fontSize: '0.8rem', color: '#94A3B8', lineHeight: 1.5 }}>
+                💡 <strong>लग्न स्तंभ (मकर):</strong> अदम्य संकल्प शक्ति, यथार्थवादी दृष्टि।<br/>
+                💡 <strong>चंद्र स्तंभ (कन्या):</strong> सूक्ष्म विश्लेषणात्मक मेधा, परफेक्शनिस्ट स्वभाव।<br/>
+                💡 <strong>नक्षत्र स्तंभ (उत्तराफाल्गुनी):</strong> समाज संरक्षण, नेतृत्व व उदारता।
+              </div>
+            </div>
+
+            {/* 05 & 06: Love & Career Destiny */}
+            <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '10px', marginBottom: '14px' }}>
+                <h3 style={{ color: '#FCD34D', margin: 0 }}>05 व 06 विवाह व करियर मार्गदर्शन</h3>
+                <span className="badge-gold">दाराकारक व अमात्यकारक</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
+                <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px' }}>
+                  <div style={{ color: '#FCD34D', fontWeight: 'bold', marginBottom: '4px' }}>❤️ दाराकारक (जीवनसाथी प्रतिनिधि):</div>
+                  <p style={{ color: '#CBD5E1', margin: 0, lineHeight: 1.5 }}>
+                    जीवनसाथी समझदार, सेवाभावी, आध्यात्मिक सोच रखने वाला और शांत स्वभाव का होगा। विवाह उपरांत आर्थिक स्थिति में निरंतर समृद्धि होगी।
+                  </p>
+                  <div style={{ color: '#34D399', fontSize: '0.8rem', marginTop: '4px' }}>
+                    अनुकूल विवाह काल: <strong>2026 - 2028 (गुरु व शुक्र की अनुकूल अंतरदशा)</strong>
+                  </div>
+                </div>
+
+                <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px' }}>
+                  <div style={{ color: '#38BDF8', fontWeight: 'bold', marginBottom: '4px' }}>💼 अमात्यकारक (करियर दिशा):</div>
+                  <p style={{ color: '#CBD5E1', margin: 0, lineHeight: 1.5 }}>
+                    बुध व शनि के प्रभाव से तकनीकी (IT/Software), कॉरपोरेट मैनेजमेंट, बैंकिंग/वित्त और डेटा एनालिटिक्स में सर्वोच्च सफलता के योग।
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px', fontSize: '0.78rem' }}>
+                    <span style={{ background: '#1E293B', padding: '2px 8px', borderRadius: '4px', color: '#4ADE80' }}>कॉरपोरेट: 88%</span>
+                    <span style={{ background: '#1E293B', padding: '2px 8px', borderRadius: '4px', color: '#FCD34D' }}>बिज़नेस: 82%</span>
+                    <span style={{ background: '#1E293B', padding: '2px 8px', borderRadius: '4px', color: '#60A5FA' }}>सरकारी: 78%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 07 & 10: Chara Karakas, Manglik & Sade Sati */}
+            <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '10px', marginBottom: '14px' }}>
+                <h3 style={{ color: '#FCD34D', margin: 0 }}>07, 09 व 10 चर कारक, मांगलिक व साढ़े साती</h3>
+                <span className="badge-gold">जैमिनी एवं कर्म चक्र</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#090D16', borderRadius: '6px' }}>
+                  <span style={{ color: '#94A3B8' }}>मांगलिक स्थिति:</span>
+                  <strong style={{ color: '#34D399' }}>आंशिक / प्रभावहीन (परिहार प्राप्त)</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#090D16', borderRadius: '6px' }}>
+                  <span style={{ color: '#94A3B8' }}>शनि साढ़े साती:</span>
+                  <strong style={{ color: '#38BDF8' }}>वर्तमान में निष्क्रिय (राहत काल)</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#090D16', borderRadius: '6px' }}>
+                  <span style={{ color: '#94A3B8' }}>आगामी साढ़े साती:</span>
+                  <strong style={{ color: '#FCD34D' }}>2036 से 2043 (सिंह, कन्या, तुला)</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#090D16', borderRadius: '6px' }}>
+                  <span style={{ color: '#94A3B8' }}>मूलांक व भाग्यांक:</span>
+                  <strong style={{ color: '#FFD700' }}>मूलांक 1 (सूर्य) | भाग्यांक 5 (बुध)</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#090D16', borderRadius: '6px' }}>
+                  <span style={{ color: '#94A3B8' }}>सक्रिय विंशोत्तरी दशा:</span>
+                  <strong style={{ color: '#FCD34D' }}>शनि महादशा - बुध अंतरदशा</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* 16: Comprehensive Remedies */}
+            <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.3)', gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(212,175,55,0.2)', paddingBottom: '10px', marginBottom: '14px' }}>
+                <h3 style={{ color: '#FCD34D', margin: 0 }}>16 संपूर्ण वैदिक उपाय एवं रत्न/रुद्राक्ष परामर्श</h3>
+                <span className="badge-gold">जीवन उत्थान सूत्र</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', fontSize: '0.85rem' }}>
+                <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #D4AF37' }}>
+                  <strong style={{ color: '#FCD34D', display: 'block', marginBottom: '4px' }}>📿 पवित्र रुद्राक्ष: 7 मुखी रुद्राक्ष</strong>
+                  <p style={{ color: '#CBD5E1', margin: 0, fontSize: '0.82rem' }}>शनिदेव व महालक्ष्मी का आशीर्वाद; आर्थिक स्थिरता, शारीरिक स्फूर्ति व आपदाओं से सुरक्षा।</p>
+                </div>
+                <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #10B981' }}>
+                  <strong style={{ color: '#34D399', display: 'block', marginBottom: '4px' }}>💎 भाग्य रत्न: पन्ना (Emerald)</strong>
+                  <p style={{ color: '#CBD5E1', margin: 0, fontSize: '0.82rem' }}>बुधवार को कनिष्ठिका उंगली में स्वर्ण/पंचधातु में धारण करें; तीक्ष्ण बुद्धि, धन व व्यापार में वृद्धि।</p>
+                </div>
+                <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #38BDF8' }}>
+                  <strong style={{ color: '#38BDF8', display: 'block', marginBottom: '4px' }}>🧘 इष्ट देव: माँ महालक्ष्मी व श्री हरि विष्णु</strong>
+                  <p style={{ color: '#CBD5E1', margin: 0, fontSize: '0.82rem' }}>मंत्र: "ॐ श्रीं ह्रीं क्लीं श्री सिद्ध लक्ष्म्यै नमः"; नित्य 108 बार जप सर्व मनोरथ सिद्ध करता है।</p>
+                </div>
+                <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px', borderLeft: '4px solid #F59E0B' }}>
+                  <strong style={{ color: '#F59E0B', display: 'block', marginBottom: '4px' }}>📜 यंत्र: श्री बुध यंत्र एवं श्री शनि यंत्र</strong>
+                  <p style={{ color: '#CBD5E1', margin: 0, fontSize: '0.82rem' }}>ईशान कोण में स्थापित कर धूप-दीप व मंत्र जाप द्वारा जागृत रखें।</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
@@ -493,31 +785,163 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Vedic Yogas & Multi-Planet Conjunctions Section */}
+          {/* 👑 Comprehensive Raj Yoga & Royal Power Combinations Section */}
           {(() => {
-            const yogas = detectStelliumsAndYogas(kundli);
-            if (yogas.length === 0) return null;
+            const allRajYogas = detectComprehensiveRajYogas(kundli);
+            const filteredRajYogas = rajYogaCategoryFilter === 'ALL'
+              ? allRajYogas
+              : allRajYogas.filter((ry) => ry.category.toLowerCase().includes(rajYogaCategoryFilter.toLowerCase()));
+
             return (
-              <section className="glass-card" style={{ border: '1px solid #D4AF37' }}>
-                <h3 style={{ color: '#FFD700', marginBottom: '14px' }}>✨ Major Vedic Yogas & Multi-Planet Yuti (राजयोग व बहुग्रह युति)</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
-                  {yogas.map((y, idx) => (
-                    <div key={idx} style={{ background: '#090D16', padding: '14px', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.3)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <h4 style={{ color: '#FFD700', fontSize: '0.98rem', margin: 0 }}>{y.name}</h4>
-                        <span style={{ background: '#4ADE80', color: '#000', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem' }}>
-                          House {y.house}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginBottom: '6px' }}>
-                        Planets Involved: <strong style={{ color: '#FFF' }}>{y.planetsInvolved.join(' + ')}</strong>
-                      </div>
-                      <p style={{ color: '#E2E8F0', fontSize: '0.84rem', lineHeight: 1.4, margin: 0 }}>
-                        {y.description}
-                      </p>
+              <section className="glass-card" style={{ border: '2px solid #D4AF37', background: 'radial-gradient(circle at 10% 20%, rgba(212,175,55,0.08) 0%, rgba(9,13,22,0.95) 90%)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.6rem' }}>👑</span>
+                      <h3 style={{ color: '#FFD700', fontSize: '1.35rem', margin: 0 }}>
+                        सम्पूर्ण राजयोग महा-विश्लेषण (Comprehensive Raj Yoga Royal Analyzer)
+                      </h3>
                     </div>
-                  ))}
+                    <p style={{ color: '#CBD5E1', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                      बृहत्पाराशर होरा शास्त्र के शास्त्रीय सिद्धांतों पर आधारित कुंडली में उपस्थित समस्त राजयोगों का विशद विश्लेषण।
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span style={{ background: '#D4AF37', color: '#000', fontWeight: 800, padding: '6px 14px', borderRadius: '8px', fontSize: '0.88rem', boxShadow: '0 0 15px rgba(212,175,55,0.4)' }}>
+                      ✨ {allRajYogas.length} राजयोग सक्रिय (Active Yogas)
+                    </span>
+                  </div>
                 </div>
+
+                {/* Raj Yoga Category Filters */}
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px' }}>
+                  {[
+                    { id: 'ALL', label: `सभी राजयोग (${allRajYogas.length})` },
+                    { id: 'Maha Raj Yoga', label: 'महा राजयोग (Supreme)' },
+                    { id: 'Pancha Mahapurusha', label: 'पंच महापुरुष (5 Great)' },
+                    { id: 'Kendra-Trikona', label: 'केंद्र-त्रिकोण राजयोग' },
+                    { id: 'Vipareeta Raja Yoga', label: 'विपरीत राजयोग' },
+                    { id: 'Dhana Raj Yoga', label: 'धन राजयोग' },
+                    { id: 'Neechbhanga', label: 'नीचभंग राजयोग' },
+                  ].map((cat) => {
+                    const count = cat.id === 'ALL' ? allRajYogas.length : allRajYogas.filter((ry) => ry.category.toLowerCase().includes(cat.id.toLowerCase())).length;
+                    const isActive = rajYogaCategoryFilter === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setRajYogaCategoryFilter(cat.id)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          border: isActive ? '1px solid #FFD700' : '1px solid rgba(255,255,255,0.12)',
+                          background: isActive ? '#D4AF37' : '#0E131F',
+                          color: isActive ? '#000' : '#E2E8F0',
+                          fontWeight: isActive ? 700 : 500,
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {cat.label} {cat.id !== 'ALL' && `(${count})`}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Raj Yoga Cards Grid */}
+                {filteredRajYogas.length === 0 ? (
+                  <div style={{ padding: '24px', textAlign: 'center', color: '#94A3B8', background: '#090D16', borderRadius: '10px' }}>
+                    इस श्रेणी में कोई विशिष्ट योग वर्तमान ग्रहों के अंतर्गत नहीं है। कृपया "सभी राजयोग" चुनें।
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                    {filteredRajYogas.map((ry) => {
+                      const isSupreme = ry.intensity.includes('Supreme');
+                      return (
+                        <div
+                          key={ry.id}
+                          style={{
+                            background: '#090D16',
+                            borderRadius: '12px',
+                            border: isSupreme ? '1.5px solid #FFD700' : '1px solid rgba(212,175,55,0.35)',
+                            boxShadow: isSupreme ? '0 4px 20px rgba(212,175,55,0.15)' : 'none',
+                            padding: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: '12px'
+                          }}
+                        >
+                          <div>
+                            {/* Card Header */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                              <div>
+                                <div style={{ color: '#FFD700', fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.3 }}>
+                                  {ry.hindiName}
+                                </div>
+                                <div style={{ color: '#94A3B8', fontSize: '0.78rem' }}>
+                                  {ry.name}
+                                </div>
+                              </div>
+                              <span
+                                style={{
+                                  background: isSupreme ? 'linear-gradient(135deg, #FFD700, #D4AF37)' : '#10B981',
+                                  color: '#000',
+                                  fontWeight: 800,
+                                  fontSize: '0.72rem',
+                                  padding: '3px 8px',
+                                  borderRadius: '6px',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {ry.intensity}
+                              </span>
+                            </div>
+
+                            {/* Meta Badges */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px', fontSize: '0.75rem' }}>
+                              <span style={{ background: 'rgba(212,175,55,0.15)', color: '#FFD700', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(212,175,55,0.3)' }}>
+                                श्रेणी: {ry.category}
+                              </span>
+                              <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ADE80', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(74,222,128,0.3)' }}>
+                                भाव: {ry.housesInvolved.map((h) => `H${h}`).join(', ')}
+                              </span>
+                              <span style={{ background: 'rgba(255,255,255,0.06)', color: '#E2E8F0', padding: '2px 8px', borderRadius: '4px' }}>
+                                संबंधित ग्रह: {ry.planetsInvolved.join(' + ')}
+                              </span>
+                            </div>
+
+                            {/* Description */}
+                            <p style={{ color: '#CBD5E1', fontSize: '0.84rem', lineHeight: 1.5, margin: 0, marginBottom: '10px' }}>
+                              {ry.description}
+                            </p>
+
+                            {/* Specific Benefits */}
+                            {ry.benefitsHindi && ry.benefitsHindi.length > 0 && (
+                              <div style={{ background: 'rgba(0,0,0,0.4)', padding: '10px', borderRadius: '8px', borderLeft: '3px solid #FFD700' }}>
+                                <div style={{ color: '#FFD700', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>
+                                  🌟 राजयोग के प्रत्यक्ष फल व आशीर्वाद:
+                                </div>
+                                <ul style={{ paddingLeft: '16px', color: '#E2E8F0', fontSize: '0.78rem', margin: 0 }}>
+                                  {ry.benefitsHindi.map((b, bIdx) => (
+                                    <li key={bIdx} style={{ marginBottom: '2px' }}>{b}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Footer Activation Timing */}
+                          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px', fontSize: '0.76rem', color: '#94A3B8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>⏳ फलित काल:</span>
+                            <span style={{ color: '#4ADE80', fontWeight: 600 }}>{ry.activationPeriod}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
             );
           })()}
@@ -996,118 +1420,606 @@ export default function HomePage() {
       {/* NUMEROLOGY TAB */}
       {activeTab === 'numerology' && (
         (() => {
-          const numResult = calculateNumerologyDetails(dob, searchQuery);
+          const numResult = calculateNumerologyDetails(dob, numerologyNameInput);
+          const vibrationResult = analyzeVibrationNumber(vibrationInput, numResult.mulank.number, numResult.bhagyank.number);
+
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <section className="glass-card" style={{ border: '1px solid #D4AF37' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+              {/* Header Card & Name Input */}
+              <section className="glass-card" style={{ border: '2px solid #D4AF37', background: 'radial-gradient(circle at 10% 20%, rgba(212,175,55,0.08) 0%, rgba(9,13,22,0.95) 90%)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '16px' }}>
                   <div>
-                    <span className="badge-gold">Chaldean & Vedic Numerology (अंकशास्त्र)</span>
-                    <h2 style={{ fontSize: '1.6rem', color: '#FFD700', marginTop: '6px' }}>
-                      🔢 Numerology Report for {dob}
-                    </h2>
-                    <p style={{ color: '#CBD5E1', fontSize: '0.9rem', marginTop: '4px' }}>
-                      {numResult.compatibilitySummary}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.6rem' }}>🔢</span>
+                      <h2 style={{ fontSize: '1.5rem', color: '#FFD700', margin: 0 }}>
+                        सम्पूर्ण वैदिक व पाश्चात्य अंकशास्त्र (Advanced Numerology & Lo Shu System)
+                      </h2>
+                    </div>
+                    <p style={{ color: '#CBD5E1', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                      चैल्डियन, पाइथागोरियन व 3x3 लो शू ग्रिड (Lo Shu Grid) पर आधारित महा-अंकशास्त्रीय विश्लेषण।
                     </p>
                   </div>
-                  <div style={{ background: '#090D16', padding: '12px 18px', borderRadius: '10px', border: '1px solid #4ADE80' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>📅 Personal Year Number (वर्तमान वर्ष):</span>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4ADE80' }}>
-                      Personal Year {numResult.personalYearNumber}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0E131F', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgba(212,175,55,0.3)' }}>
+                    <span style={{ color: '#94A3B8', fontSize: '0.82rem' }}>जन्म तिथि (DOB):</span>
+                    <strong style={{ color: '#FFD700', fontSize: '1rem' }}>{dob}</strong>
+                  </div>
+                </div>
+
+                {/* Name Input Bar for Live Namank & Soul Urge calculation */}
+                <div style={{ background: '#090D16', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                  <label style={{ color: '#FFD700', fontSize: '0.85rem', fontWeight: 600 }}>
+                    ✍️ अपना पूरा नाम दर्ज करें (Enter Full Name for Namank & Soul Urge):
+                  </label>
+                  <input
+                    type="text"
+                    value={numerologyNameInput}
+                    onChange={(e) => setNumerologyNameInput(e.target.value)}
+                    placeholder="e.g. Pankaj Sharma"
+                    style={{
+                      flex: 1,
+                      minWidth: '220px',
+                      padding: '8px 12px',
+                      background: '#0E131F',
+                      border: '1px solid #D4AF37',
+                      borderRadius: '6px',
+                      color: '#FFF',
+                      fontSize: '0.9rem'
+                    }}
+                  />
+                  <span style={{ color: '#94A3B8', fontSize: '0.78rem' }}>
+                    (चैल्डियन व पाइथागोरस दोनों पद्धतियों से लाइव विश्लेषण)
+                  </span>
+                </div>
+              </section>
+
+              {/* 6 Core Master Numbers Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                {/* 1. Mulank (Driver) */}
+                <div className="glass-card" style={{ border: '1.5px solid #FFD700', padding: '14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>मूलांक (Driver / Root)</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#FFD700', margin: '4px 0' }}>
+                    {numResult.mulank.number}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#FFF', fontWeight: 600 }}>
+                    {numResult.mulank.planetSymbol} {numResult.mulank.rulingPlanetHindi}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '4px' }}>जन्म तिथि से (Day of Birth)</div>
+                </div>
+
+                {/* 2. Bhagyank (Conductor) */}
+                <div className="glass-card" style={{ border: '1.5px solid #4ADE80', padding: '14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>भाग्यांक (Conductor / Destiny)</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#4ADE80', margin: '4px 0' }}>
+                    {numResult.bhagyank.number}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#FFF', fontWeight: 600 }}>
+                    {numResult.bhagyank.planetSymbol} {numResult.bhagyank.rulingPlanetHindi}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '4px' }}>पूर्ण जन्म तिथि योग (Life Path)</div>
+                </div>
+
+                {/* 3. Chaldean Namank */}
+                <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.4)', padding: '14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>चैल्डियन नामांक (Chaldean)</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#38BDF8', margin: '4px 0' }}>
+                    {numResult.namank ? numResult.namank.number : '—'}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#FFF', fontWeight: 600 }}>
+                    {numResult.namank ? `${numResult.namank.planetSymbol} ${numResult.namank.rulingPlanetHindi}` : 'नाम दर्ज करें'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '4px' }}>प्राचीन वैदिक पद्धति</div>
+                </div>
+
+                {/* 4. Pythagorean Namank */}
+                <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.4)', padding: '14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>पाइथागोरस नामांक (Expression)</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#A78BFA', margin: '4px 0' }}>
+                    {numResult.pythagoreanNamank || '—'}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#FFF', fontWeight: 600 }}>
+                    {numResult.pythagoreanNamank ? `${NUMEROLOGY_PROFILES[numResult.pythagoreanNamank]?.rulingPlanetHindi || ''}` : 'नाम दर्ज करें'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '4px' }}>पाश्चात्य अभिव्यक्ति अंक</div>
+                </div>
+
+                {/* 5. Soul Urge Number */}
+                <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.4)', padding: '14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>आत्म इच्छा अंक (Soul Urge)</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#F472B6', margin: '4px 0' }}>
+                    {numResult.soulUrgeNumber || '—'}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#FFF', fontWeight: 600 }}>
+                    {numResult.soulUrgeNumber ? `${NUMEROLOGY_PROFILES[numResult.soulUrgeNumber]?.planetSymbol || ''} स्वर योग (Vowels)` : 'नाम दर्ज करें'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '4px' }}>हृदय की आंतरिक अभिलाषा</div>
+                </div>
+
+                {/* 6. Personality Number */}
+                <div className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.4)', padding: '14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>व्यक्तित्व अंक (Personality)</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#FBBF24', margin: '4px 0' }}>
+                    {numResult.personalityNumber || '—'}
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: '#FFF', fontWeight: 600 }}>
+                    {numResult.personalityNumber ? `${NUMEROLOGY_PROFILES[numResult.personalityNumber]?.planetSymbol || ''} व्यंजन योग (Consonants)` : 'नाम दर्ज करें'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '4px' }}>बाह्य सामाजिक छवि</div>
+                </div>
+              </div>
+
+              {/* Driver & Conductor Harmony Matrix Card */}
+              <section className="glass-card" style={{ border: '1px solid #D4AF37', background: '#090D16' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+                  <div style={{ flex: 1, minWidth: '280px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>🤝</span>
+                      <h3 style={{ color: '#FFD700', fontSize: '1.15rem', margin: 0 }}>
+                        मूलांक व भाग्यांक सामंजस्य विश्लेषण (Driver-Conductor Harmony Matrix)
+                      </h3>
+                      <span
+                        style={{
+                          background: numResult.harmony.relation.includes('मित्र') ? '#10B981' : numResult.harmony.relation.includes('शत्रु') ? '#EF4444' : '#F59E0B',
+                          color: '#000',
+                          fontWeight: 800,
+                          fontSize: '0.75rem',
+                          padding: '3px 10px',
+                          borderRadius: '6px'
+                        }}
+                      >
+                        {numResult.harmony.relation}
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#CBD5E1', marginTop: '2px' }}>
-                      {numResult.personalYearForecast}
+                    <p style={{ color: '#CBD5E1', fontSize: '0.88rem', lineHeight: 1.5, margin: 0, marginBottom: '8px' }}>
+                      {numResult.harmony.analysisHindi}
+                    </p>
+                    <div style={{ color: '#4ADE80', fontSize: '0.82rem', fontWeight: 600 }}>
+                      💡 जीवन सलाह: {numResult.harmony.synergyAdviceHindi}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'center', background: '#0E131F', padding: '16px 24px', borderRadius: '12px', border: '1px solid rgba(212,175,55,0.3)' }}>
+                    <div style={{ fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>सामंजस्य स्कोर (Harmony Score):</div>
+                    <div style={{ fontSize: '2.4rem', fontWeight: 900, color: numResult.harmony.scorePercentage >= 80 ? '#4ADE80' : numResult.harmony.scorePercentage >= 60 ? '#FFD700' : '#FF6B6B' }}>
+                      {numResult.harmony.scorePercentage}%
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>
+                      {numResult.harmony.scorePercentage >= 80 ? 'अत्यंत उत्तम तालमेल' : 'संतुलन आवश्यक'}
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* 2 Numbers Grid: Mulank & Bhagyank */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                {/* Mulank Card */}
-                <div className="glass-card" style={{ border: '1px solid #FFD700' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <h3 style={{ color: '#FFD700', fontSize: '1.2rem', margin: 0 }}>
-                      {numResult.mulank.planetSymbol} मूलांक {numResult.mulank.number} (Mulank / Driver)
-                    </h3>
-                    <span style={{ background: '#FFD700', color: '#000', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
-                      {numResult.mulank.rulingPlanetHindi} ({numResult.mulank.rulingPlanet})
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.88rem', color: '#FFF', fontWeight: 700, marginBottom: '8px' }}>
-                    {numResult.mulank.title}
-                  </div>
-                  <div style={{ fontSize: '0.83rem', color: '#CBD5E1', marginBottom: '10px' }}>
-                    <strong>विशेष गुण:</strong> {numResult.mulank.traitsHindi.join(', ')}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.8rem', background: '#090D16', padding: '8px', borderRadius: '6px' }}>
-                    <div><span style={{ color: '#94A3B8' }}>🎨 लकी रंग:</span> <span style={{ color: '#4ADE80' }}>{numResult.mulank.luckyColors.join(', ')}</span></div>
-                    <div><span style={{ color: '#94A3B8' }}>💎 लकी रत्न:</span> <span style={{ color: '#FFD700' }}>{numResult.mulank.luckyGems.join(', ')}</span></div>
-                    <div><span style={{ color: '#94A3B8' }}>📅 लकी तिथियां:</span> <span style={{ color: '#FFF' }}>{numResult.mulank.luckyDates.join(', ')}</span></div>
-                    <div><span style={{ color: '#94A3B8' }}>🗓️ लकी दिन:</span> <span style={{ color: '#4ADE80' }}>{numResult.mulank.luckyDays.join(', ')}</span></div>
-                  </div>
-                  <div style={{ marginTop: '10px', fontSize: '0.82rem' }}>
-                    <strong style={{ color: '#4ADE80' }}>अनुकूल कार्यक्षेत्र (Career):</strong>
-                    <ul style={{ paddingLeft: '16px', color: '#CBD5E1', margin: '4px 0 0 0' }}>
-                      {numResult.mulank.careerRecommendationsHindi.slice(0, 3).map((c: string, i: number) => (
-                        <li key={i}>{c}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+              {/* 🌐 LO SHU GRID (लो शू ग्रिड - 3x3 Magic Square) & 8 PLANES */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+                {/* 3x3 Visual Lo Shu Grid */}
+                <section className="glass-card" style={{ border: '2px solid #D4AF37', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                      <div>
+                        <h3 style={{ color: '#FFD700', fontSize: '1.2rem', margin: 0 }}>
+                          ⛩️ लो शू ग्रिड (3x3 Lo Shu Magic Square)
+                        </h3>
+                        <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
+                          DOB ({dob}) + मूलांक ({numResult.mulank.number}) + भाग्यांक ({numResult.bhagyank.number})
+                        </span>
+                      </div>
+                      {numResult.goldenRajYogPresent && (
+                        <span style={{ background: 'linear-gradient(135deg, #FFD700, #D4AF37)', color: '#000', fontWeight: 800, fontSize: '0.72rem', padding: '4px 8px', borderRadius: '6px' }}>
+                          ✨ 4-5-6 स्वर्ण राजयोग सक्रिय
+                        </span>
+                      )}
+                    </div>
 
-                {/* Bhagyank Card */}
-                <div className="glass-card" style={{ border: '1px solid #4ADE80' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <h3 style={{ color: '#4ADE80', fontSize: '1.2rem', margin: 0 }}>
-                      {numResult.bhagyank.planetSymbol} भाग्यांक {numResult.bhagyank.number} (Bhagyank / Life Path)
-                    </h3>
-                    <span style={{ background: '#4ADE80', color: '#000', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
-                      {numResult.bhagyank.rulingPlanetHindi} ({numResult.bhagyank.rulingPlanet})
-                    </span>
+                    {/* 3x3 Grid Render */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', aspectRatio: '1/1', maxWidth: '340px', margin: '0 auto 16px auto' }}>
+                      {numResult.loShuGrid.matrix.flat().map((cell, cIdx) => {
+                        if (!cell) return null;
+                        const isPresent = cell.count > 0;
+                        const isUserBase = cell.number === numResult.mulank.number || cell.number === numResult.bhagyank.number;
+
+                        return (
+                          <div
+                            key={cIdx}
+                            style={{
+                              background: isPresent
+                                ? isUserBase
+                                  ? 'radial-gradient(circle, rgba(212,175,55,0.3) 0%, rgba(9,13,22,0.9) 100%)'
+                                  : 'rgba(212,175,55,0.12)'
+                                : '#07090E',
+                              border: isPresent
+                                ? isUserBase
+                                  ? '2px solid #FFD700'
+                                  : '1px solid rgba(212,175,55,0.5)'
+                                : '1px solid rgba(255,255,255,0.06)',
+                              borderRadius: '10px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              padding: '8px',
+                              boxShadow: isPresent ? '0 0 10px rgba(212,175,55,0.15)' : 'none',
+                              position: 'relative'
+                            }}
+                          >
+                            <span style={{ fontSize: '0.68rem', color: '#94A3B8', position: 'absolute', top: 4, left: 6 }}>
+                              {cell.direction.split(' ')[0]}
+                            </span>
+                            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: isPresent ? '#FFD700' : '#475569', letterSpacing: '2px' }}>
+                              {cell.display}
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: isPresent ? '#4ADE80' : '#64748B', marginTop: '2px', textAlign: 'center' }}>
+                              {cell.rulingPlanet.split(' ')[0]}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.88rem', color: '#FFF', fontWeight: 700, marginBottom: '8px' }}>
-                    {numResult.bhagyank.title}
+
+                  <div style={{ background: '#07090E', padding: '10px', borderRadius: '8px', fontSize: '0.75rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                    📌 <strong>ग्रिड नियम:</strong> ऊपरी पंक्ति (4-9-2), मध्य पंक्ति (3-5-7), निचली पंक्ति (8-1-6)। सुनहरे अंक जातक की कुंडली में उपस्थित ऊर्जा को दर्शाते हैं।
                   </div>
-                  <div style={{ fontSize: '0.83rem', color: '#CBD5E1', marginBottom: '10px' }}>
-                    <strong>विशेष गुण:</strong> {numResult.bhagyank.traitsHindi.join(', ')}
+                </section>
+
+                {/* 8 Lo Shu Planes Analysis */}
+                <section className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.35)' }}>
+                  <h3 style={{ color: '#FFD700', fontSize: '1.2rem', marginBottom: '12px' }}>
+                    🌐 लो शू ग्रिड के 8 तल (8 Planes of Success & Will Power)
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {numResult.loShuPlanes.map((plane, pIdx) => {
+                      const isGolden = plane.numbers.join('-') === '4-5-6';
+                      const isSilver = plane.numbers.join('-') === '2-5-8';
+
+                      return (
+                        <div
+                          key={pIdx}
+                          style={{
+                            background: '#090D16',
+                            border: isGolden && plane.isComplete
+                              ? '1.5px solid #FFD700'
+                              : isSilver && plane.isComplete
+                              ? '1.5px solid #4ADE80'
+                              : '1px solid rgba(255,255,255,0.06)',
+                            borderRadius: '8px',
+                            padding: '10px 12px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <strong style={{ color: isGolden ? '#FFD700' : isSilver ? '#4ADE80' : '#FFF', fontSize: '0.88rem' }}>
+                              {isGolden ? '👑 ' : isSilver ? '🥈 ' : '🔹 '} {plane.hindiName}
+                            </strong>
+                            <span
+                              style={{
+                                background: plane.isComplete ? '#10B981' : plane.percentage >= 66 ? '#D97706' : '#1E293B',
+                                color: plane.isComplete ? '#000' : '#E2E8F0',
+                                fontWeight: 700,
+                                fontSize: '0.72rem',
+                                padding: '2px 8px',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              {plane.isComplete ? '100% पूर्ण (Active)' : `${plane.percentage}% सक्रिय`}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                            <div style={{ flex: 1, height: '6px', background: '#1E293B', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div style={{ width: `${plane.percentage}%`, height: '100%', background: isGolden ? '#FFD700' : isSilver ? '#4ADE80' : '#38BDF8', transition: 'width 0.3s' }} />
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                              उपस्थित: {plane.presentNumbers.join(', ') || 'कोई नहीं'}
+                            </span>
+                          </div>
+
+                          <p style={{ color: '#CBD5E1', fontSize: '0.78rem', margin: 0, lineHeight: 1.35 }}>
+                            {plane.meaningHindi}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '0.8rem', background: '#090D16', padding: '8px', borderRadius: '6px' }}>
-                    <div><span style={{ color: '#94A3B8' }}>🤝 मित्र अंक:</span> <span style={{ color: '#4ADE80' }}>{numResult.bhagyank.compatibleNumbers.join(', ')}</span></div>
-                    <div><span style={{ color: '#94A3B8' }}>⚠️ शत्रु अंक:</span> <span style={{ color: '#FF6B6B' }}>{numResult.bhagyank.enemyNumbers.join(', ') || 'कोई नहीं'}</span></div>
-                    <div><span style={{ color: '#94A3B8' }}>🎨 लकी रंग:</span> <span style={{ color: '#4ADE80' }}>{numResult.bhagyank.luckyColors.slice(0, 2).join(', ')}</span></div>
-                    <div><span style={{ color: '#94A3B8' }}>💎 लकी रत्न:</span> <span style={{ color: '#FFD700' }}>{numResult.bhagyank.luckyGems.join(', ')}</span></div>
-                  </div>
-                  <div style={{ marginTop: '10px', fontSize: '0.82rem' }}>
-                    <strong style={{ color: '#4ADE80' }}>जीवन पथ व सफलता के क्षेत्र:</strong>
-                    <ul style={{ paddingLeft: '16px', color: '#CBD5E1', margin: '4px 0 0 0' }}>
-                      {numResult.bhagyank.careerRecommendationsHindi.slice(0, 3).map((c: string, i: number) => (
-                        <li key={i}>{c}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                </section>
               </div>
 
-              {/* Master Numerology Numbers 1 to 9 Reference Grid */}
-              <section className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.3)' }}>
-                <h3 style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '12px', textAlign: 'center' }}>
-                  🌐 Numerology Numbers 1 to 9 Planet & Career Reference Grid (अंक 1 से 9 स्वामी व करियर)
+              {/* ⚠️ MISSING NUMBERS & AUTHENTIC VEDIC REMEDIES */}
+              <section className="glass-card" style={{ border: '1px solid #FF6B6B' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <h3 style={{ color: '#FF6B6B', fontSize: '1.25rem', margin: 0 }}>
+                      ⚠️ अनुपस्थित अंक व अचूक निवारण (Missing Numbers & Authentic Vedic Remedies)
+                    </h3>
+                    <p style={{ color: '#94A3B8', fontSize: '0.82rem', margin: '4px 0 0 0' }}>
+                      लो शू ग्रिड में जो अंक अनुपस्थित हैं, उनके प्रभावों को संतुलित करने के लिए लाल किताब व वैदिक उपाय।
+                    </p>
+                  </div>
+                  <span style={{ background: '#EF4444', color: '#FFF', fontWeight: 700, fontSize: '0.78rem', padding: '4px 10px', borderRadius: '6px' }}>
+                    {numResult.missingNumbers.length} अंक अनुपस्थित
+                  </span>
+                </div>
+
+                {numResult.missingNumbers.length === 0 ? (
+                  <div style={{ padding: '16px', background: '#090D16', borderRadius: '8px', color: '#4ADE80', textAlign: 'center' }}>
+                    🎉 अद्भुत! आपकी जन्म तिथि में कोई भी अंक अनुपस्थित नहीं है। सभी 9 ग्रहों की ऊर्जाएं सक्रिय हैं।
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+                    {numResult.missingNumbers.map((m) => (
+                      <div key={m.number} style={{ background: '#090D16', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,107,107,0.3)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#FF6B6B', fontWeight: 800, fontSize: '1rem' }}>
+                            अंक {m.number} की कमी ({m.rulingPlanetHindi})
+                          </span>
+                          <span style={{ fontSize: '0.72rem', background: 'rgba(255,107,107,0.15)', color: '#FF6B6B', padding: '2px 6px', borderRadius: '4px' }}>
+                            Missing {m.number}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#CBD5E1' }}>
+                          <strong>प्रभाव:</strong> {m.missingTraitsHindi}
+                        </div>
+                        <div style={{ background: '#0E131F', padding: '8px 10px', borderRadius: '6px', borderLeft: '3px solid #4ADE80', marginTop: '4px' }}>
+                          <div style={{ color: '#4ADE80', fontSize: '0.75rem', fontWeight: 700, marginBottom: '2px' }}>
+                            अचूक उपाय (Remedies):
+                          </div>
+                          <ul style={{ paddingLeft: '14px', color: '#E2E8F0', fontSize: '0.75rem', margin: 0 }}>
+                            {m.remedies.map((rem, rIdx) => (
+                              <li key={rIdx} style={{ marginBottom: '2px' }}>{rem}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* 🔁 REPEATED NUMBERS IMPACT */}
+              {numResult.repeatedNumbers.length > 0 && (
+                <section className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.3)' }}>
+                  <h3 style={{ color: '#FFD700', fontSize: '1.2rem', marginBottom: '12px' }}>
+                    🔁 दोहराए गए अंकों का प्रभाव (Repeated Numbers Impact Analysis)
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                    {numResult.repeatedNumbers.map((rep) => (
+                      <div key={rep.number} style={{ background: '#090D16', padding: '12px', borderRadius: '8px', border: '1px solid rgba(212,175,55,0.2)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <strong style={{ color: '#FFD700', fontSize: '0.9rem' }}>
+                            अंक {rep.number} ({rep.count} बार दोहराव)
+                          </strong>
+                          <span style={{ background: 'rgba(212,175,55,0.15)', color: '#FFD700', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px' }}>
+                            {rep.count}x Frequency
+                          </span>
+                        </div>
+                        <p style={{ color: '#CBD5E1', fontSize: '0.8rem', margin: 0, marginBottom: '6px', lineHeight: 1.35 }}>
+                          {rep.impactHindi}
+                        </p>
+                        <div style={{ color: '#4ADE80', fontSize: '0.74rem' }}>
+                          💡 <strong>संतुलन उपाय:</strong> {rep.guidanceHindi}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 📱 INTERACTIVE LIVE VIBRATION ANALYZER (Mobile / Vehicle / House / Bank Account) */}
+              <section className="glass-card" style={{ border: '2px solid #38BDF8', background: 'radial-gradient(circle at 10% 20%, rgba(56,189,248,0.06) 0%, rgba(9,13,22,0.95) 90%)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.4rem' }}>📱</span>
+                      <h3 style={{ color: '#38BDF8', fontSize: '1.25rem', margin: 0 }}>
+                        मोबाइल, गाड़ी, घर व बैंक खाता अंक परीक्षक (Interactive Vibration Checker)
+                      </h3>
+                    </div>
+                    <p style={{ color: '#94A3B8', fontSize: '0.82rem', margin: '4px 0 0 0' }}>
+                      कोई भी मोबाइल नंबर, वाहन नंबर (जैसे RJ14CV1234) अथवा फ्लैट नंबर दर्ज कर अपने मूलांक व भाग्यांक से अनुकूलता जाँचें।
+                    </p>
+                  </div>
+                </div>
+
+                {/* Input Controls */}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                  {/* Category Buttons */}
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[
+                      { id: 'mobile', label: '📞 मोबाइल नंबर' },
+                      { id: 'vehicle', label: '🚗 गाड़ी नंबर' },
+                      { id: 'house', label: '🏠 फ्लैट/घर' },
+                      { id: 'custom', label: '💳 बैंक/अन्य' },
+                    ].map((btn) => (
+                      <button
+                        key={btn.id}
+                        onClick={() => {
+                          setVibrationCategory(btn.id as any);
+                          if (btn.id === 'mobile') setVibrationInput('9876543210');
+                          else if (btn.id === 'vehicle') setVibrationInput('RJ 14 CV 1234');
+                          else if (btn.id === 'house') setVibrationInput('402');
+                          else setVibrationInput('5010023456');
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: vibrationCategory === btn.id ? '1px solid #38BDF8' : '1px solid rgba(255,255,255,0.1)',
+                          background: vibrationCategory === btn.id ? '#0284C7' : '#0E131F',
+                          color: '#FFF',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={vibrationInput}
+                    onChange={(e) => setVibrationInput(e.target.value)}
+                    placeholder="Enter number or text e.g. 9829012345 or DL 01 AB 9999"
+                    style={{
+                      flex: 1,
+                      minWidth: '220px',
+                      padding: '10px 14px',
+                      background: '#090D16',
+                      border: '1.5px solid #38BDF8',
+                      borderRadius: '8px',
+                      color: '#FFF',
+                      fontSize: '1rem',
+                      fontWeight: 700
+                    }}
+                  />
+                </div>
+
+                {/* Vibration Result Card */}
+                <div style={{ background: '#090D16', padding: '16px', borderRadius: '10px', border: '1px solid rgba(56,189,248,0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                  <div style={{ flex: 1, minWidth: '260px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>{vibrationResult.planetSymbol}</span>
+                      <strong style={{ color: '#38BDF8', fontSize: '1.1rem' }}>
+                        एकल अंक (Root Number): {vibrationResult.rootNumber} ({vibrationResult.rulingPlanetHindi})
+                      </strong>
+                      <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
+                        (योग: {vibrationResult.compoundSum} ➔ {vibrationResult.rootNumber})
+                      </span>
+                    </div>
+
+                    <p style={{ color: '#CBD5E1', fontSize: '0.85rem', margin: '0 0 8px 0', lineHeight: 1.45 }}>
+                      {vibrationResult.verdictHindi}
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '0.78rem' }}>
+                      <span style={{ background: 'rgba(212,175,55,0.15)', color: '#FFD700', padding: '2px 8px', borderRadius: '4px' }}>
+                        मूलांक ({numResult.mulank.number}) अनुकूलता: {vibrationResult.compatibilityWithMulank}
+                      </span>
+                      <span style={{ background: 'rgba(74,222,128,0.15)', color: '#4ADE80', padding: '2px 8px', borderRadius: '4px' }}>
+                        भाग्यांक ({numResult.bhagyank.number}) अनुकूलता: {vibrationResult.compatibilityWithBhagyank}
+                      </span>
+                    </div>
+
+                    <div style={{ color: '#94A3B8', fontSize: '0.8rem', marginTop: '8px' }}>
+                      📌 <strong>सुझाव:</strong> {vibrationResult.recommendation}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'center', background: '#0E131F', padding: '14px 20px', borderRadius: '10px', border: '1px solid rgba(56,189,248,0.4)' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>अनुकूलता स्कोर (Score):</div>
+                    <div style={{ fontSize: '2.2rem', fontWeight: 900, color: vibrationResult.overallScore >= 80 ? '#4ADE80' : vibrationResult.overallScore >= 60 ? '#FFD700' : '#FF6B6B' }}>
+                      {vibrationResult.overallScore}%
+                    </div>
+                    <span
+                      style={{
+                        background: vibrationResult.overallScore >= 80 ? '#10B981' : vibrationResult.overallScore >= 60 ? '#D97706' : '#EF4444',
+                        color: '#000',
+                        fontWeight: 800,
+                        fontSize: '0.72rem',
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      {vibrationResult.overallScore >= 80 ? 'अत्यंत शुभ' : vibrationResult.overallScore >= 60 ? 'सामान्य' : 'अशुभ'}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              {/* 📅 PERSONAL TIME CYCLES (Year, Month, Day) */}
+              <section className="glass-card" style={{ border: '1px solid #4ADE80' }}>
+                <h3 style={{ color: '#4ADE80', fontSize: '1.2rem', marginBottom: '14px' }}>
+                  📅 व्यक्तिगत समय चक्र (Personal Year, Month & Day Cycles)
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  {/* Year */}
+                  <div style={{ background: '#090D16', padding: '14px', borderRadius: '10px', border: '1px solid rgba(74,222,128,0.3)' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>वर्तमान वर्ष चक्र (Personal Year):</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#4ADE80', margin: '4px 0' }}>
+                      वर्ष {numResult.timeCycles.personalYear}
+                    </div>
+                    <p style={{ color: '#CBD5E1', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>
+                      {numResult.timeCycles.personalYearTheme}
+                    </p>
+                  </div>
+
+                  {/* Month */}
+                  <div style={{ background: '#090D16', padding: '14px', borderRadius: '10px', border: '1px solid rgba(74,222,128,0.3)' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>वर्तमान माह चक्र (Personal Month):</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#38BDF8', margin: '4px 0' }}>
+                      माह {numResult.timeCycles.personalMonth}
+                    </div>
+                    <p style={{ color: '#CBD5E1', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>
+                      {numResult.timeCycles.personalMonthTheme}
+                    </p>
+                  </div>
+
+                  {/* Day */}
+                  <div style={{ background: '#090D16', padding: '14px', borderRadius: '10px', border: '1px solid rgba(74,222,128,0.3)' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>आज का दिन चक्र (Personal Day):</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFD700', margin: '4px 0' }}>
+                      दिन {numResult.timeCycles.personalDay}
+                    </div>
+                    <p style={{ color: '#CBD5E1', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>
+                      {numResult.timeCycles.personalDayTheme}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 🧭 LUCKY COMPASS & VASTU (लकी कम्पास व वास्तु) */}
+              <section className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.35)' }}>
+                <h3 style={{ color: '#FFD700', fontSize: '1.2rem', marginBottom: '14px' }}>
+                  🧭 लकी कम्पास व वास्तु संरेखण (Lucky Compass, Colors, Days & Vastu)
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+                  <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ color: '#4ADE80', fontWeight: 700, fontSize: '0.85rem', marginBottom: '4px' }}>🌟 शुभ व मित्र अंक (Lucky Numbers):</div>
+                    <div style={{ fontSize: '0.95rem', color: '#FFF', fontWeight: 700 }}>
+                      {numResult.luckyCompass.friendlyNumbers.join(', ')} (मूल: {numResult.mulank.number}, {numResult.bhagyank.number})
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ color: '#FF6B6B', fontWeight: 700, fontSize: '0.85rem', marginBottom: '4px' }}>⚠️ शत्रु व बचाव योग्य अंक (Avoid Numbers):</div>
+                    <div style={{ fontSize: '0.95rem', color: '#FF6B6B', fontWeight: 700 }}>
+                      {numResult.luckyCompass.enemyNumbers.join(', ') || 'कोई नहीं'}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ color: '#38BDF8', fontWeight: 700, fontSize: '0.85rem', marginBottom: '4px' }}>🧭 लकी वास्तु दिशाएं (Lucky Directions):</div>
+                    <div style={{ fontSize: '0.85rem', color: '#E2E8F0' }}>
+                      {numResult.luckyCompass.luckyDirections.join(' • ')}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#090D16', padding: '12px', borderRadius: '8px' }}>
+                    <div style={{ color: '#FFD700', fontWeight: 700, fontSize: '0.85rem', marginBottom: '4px' }}>🎨 लकी रंग व रत्न (Colors & Gems):</div>
+                    <div style={{ fontSize: '0.85rem', color: '#E2E8F0' }}>
+                      रंग: {numResult.luckyCompass.luckyColors.slice(0, 3).join(', ')} | रत्न: {numResult.luckyCompass.luckyGemstones.slice(0, 2).join(', ')}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Master 1 to 9 Reference Grid */}
+              <section className="glass-card" style={{ border: '1px solid rgba(212,175,55,0.2)' }}>
+                <h3 style={{ color: '#FFD700', fontSize: '1.1rem', marginBottom: '12px', textAlign: 'center' }}>
+                  🌐 अंक 1 से 9 स्वामी व करियर संदर्भ तालिका (Universal Numbers 1-9 Grid)
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px' }}>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
-                    const prof = NUMEROLOGY_PROFILES[n];
-                    const isUserNum = n === numResult.mulank.number || n === numResult.bhagyank.number;
+                    const prof = NUMEROLOGY_PROFILES?.[n];
+                    if (!prof) return null;
+                    const isUserNum = n === numResult.mulank?.number || n === numResult.bhagyank?.number;
                     return (
-                      <div key={n} style={{ background: isUserNum ? 'rgba(212,175,55,0.15)' : '#090D16', border: isUserNum ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px' }}>
+                      <div key={n} style={{ background: isUserNum ? 'rgba(212,175,55,0.15)' : '#090D16', border: isUserNum ? '1px solid #D4AF37' : '1px solid rgba(255,255,255,0.06)', padding: '10px', borderRadius: '8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                           <span style={{ color: '#FFD700', fontWeight: 700, fontSize: '0.9rem' }}>
                             {prof.planetSymbol} अंक {n} ({prof.rulingPlanetHindi})
                           </span>
                           {isUserNum && <span style={{ background: '#4ADE80', color: '#000', fontSize: '0.7rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>आपका अंक</span>}
                         </div>
-                        <div style={{ fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px' }}>{prof.title}</div>
-                        <div style={{ fontSize: '0.78rem', color: '#CBD5E1' }}>
+                        <div style={{ fontSize: '0.76rem', color: '#94A3B8', marginBottom: '4px' }}>{prof.title}</div>
+                        <div style={{ fontSize: '0.76rem', color: '#CBD5E1' }}>
                           • {prof.careerRecommendationsHindi.slice(0, 2).join(' • ')}
                         </div>
                       </div>

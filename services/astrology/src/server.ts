@@ -1,7 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import { KundliRequestSchema, KundliMatchingSchema } from '@vedic-astro/validation';
-import { calculateKundli, calculateDivisionalCharts, calculateVimshottariDasha, calculateDailyPanchang, calculateAshtakootaMatching } from '@vedic-astro/astrology-engine';
+import {
+  calculateKundli,
+  calculateDivisionalCharts,
+  calculateVimshottariDasha,
+  calculateDailyPanchang,
+  calculateAshtakootaMatching,
+  generateFullKundliReport,
+  generateKundliReportHtml
+} from '@vedic-astro/astrology-engine';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { execSync } from 'child_process';
 
 const app = express();
 app.use(cors());
@@ -121,6 +133,76 @@ app.post('/api/v1/astrology/matching', (req, res) => {
     return res.status(500).json({ success: false, error: { code: 'CALCULATION_ERROR', message: err.message } });
   }
 });
+
+// Full 17-Chapter Kundli Report Endpoints
+app.post('/api/v1/astrology/report/json', (req, res) => {
+  try {
+    const { name = 'PANKAJ DADHICH', gender = 'Male', dob = '2002-02-01', tob = '06:55:00', place = 'Kheri Seela, Rajasthan', latitude = 26.8956, longitude = 74.4630 } = req.body;
+    const reportData = generateFullKundliReport(name, gender, dob, tob, latitude, longitude, place);
+    return res.json({ success: true, data: reportData });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: 'REPORT_GEN_ERROR', message: err.message } });
+  }
+});
+
+app.post('/api/v1/astrology/report/html', (req, res) => {
+  try {
+    const { name = 'PANKAJ DADHICH', gender = 'Male', dob = '2002-02-01', tob = '06:55:00', place = 'Kheri Seela, Rajasthan', latitude = 26.8956, longitude = 74.4630 } = req.body;
+    const reportData = generateFullKundliReport(name, gender, dob, tob, latitude, longitude, place);
+    const html = generateKundliReportHtml(reportData);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: 'REPORT_HTML_ERROR', message: err.message } });
+  }
+});
+
+app.post('/api/v1/astrology/report/pdf', (req, res) => {
+  try {
+    const { name = 'PANKAJ DADHICH', gender = 'Male', dob = '2002-02-01', tob = '06:55:00', place = 'Kheri Seela, Rajasthan', latitude = 26.8956, longitude = 74.4630 } = req.body;
+    const reportData = generateFullKundliReport(name, gender, dob, tob, latitude, longitude, place);
+    const html = generateKundliReportHtml(reportData);
+
+    const tmpDir = os.tmpdir();
+    const fileId = `rep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const htmlPath = path.join(tmpDir, `${fileId}.html`);
+    const pdfPath = path.join(tmpDir, `${fileId}.pdf`);
+
+    fs.writeFileSync(htmlPath, html, 'utf8');
+
+    const candidates = [
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+      '/usr/bin/google-chrome',
+      '/usr/bin/chromium'
+    ];
+    let chromeExe = 'chrome';
+    for (const c of candidates) {
+      if (fs.existsSync(c)) { chromeExe = c; break; }
+    }
+
+    execSync(`"${chromeExe}" --headless --disable-gpu --no-pdf-header-footer --print-to-pdf="${pdfPath}" "${htmlPath}"`, { timeout: 45000 });
+    const pdfBuf = fs.readFileSync(pdfPath);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Vedic_Kundli_Report_${encodeURIComponent(name)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuf.length);
+
+    setTimeout(() => {
+      try {
+        if (fs.existsSync(htmlPath)) fs.unlinkSync(htmlPath);
+        if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
+      } catch {}
+    }, 30000);
+
+    return res.send(pdfBuf);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: 'REPORT_PDF_ERROR', message: err.message } });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`🔮 Astrology Service running on port ${PORT}`);

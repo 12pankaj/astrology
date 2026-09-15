@@ -35,8 +35,24 @@ export interface VedicYogaDetected {
   name: string;
   house: number;
   planetsInvolved: string[];
-  type: 'Raj Yoga (राजयोग)' | 'Dhana Yoga (धनयोग)' | 'Maha Purusha Yoga' | 'Special Conjunction (विशेष युति)';
+  type: 'Raj Yoga (राजयोग)' | 'Dhana Yoga (धनयोग)' | 'Maha Purusha Yoga' | 'Special Conjunction (विशेष युति)' | 'Vipareeta Raja Yoga (विपरीत राजयोग)' | 'Neechbhanga Raj Yoga (नीचभंग राजयोग)';
   description: string;
+  intensity?: 'Supreme (अति प्रबल)' | 'Strong (प्रबल)' | 'Moderate (सामान्य)';
+  activationPeriod?: string;
+  benefits?: string[];
+}
+
+export interface RajYogaDetail {
+  id: string;
+  name: string;
+  hindiName: string;
+  category: 'Maha Raj Yoga' | 'Pancha Mahapurusha' | 'Vipareeta Raja Yoga' | 'Dhana Raj Yoga' | 'Kendra-Trikona' | 'Neechbhanga';
+  planetsInvolved: string[];
+  housesInvolved: number[];
+  intensity: 'Supreme (अति प्रबल)' | 'Strong (प्रबल)' | 'Moderate (सामान्य)';
+  activationPeriod: string;
+  description: string;
+  benefitsHindi: string[];
 }
 
 export interface VedicDoshaDetected {
@@ -98,7 +114,7 @@ export function detectVedicDoshasAndRemedies(kundli: KundliData): VedicDoshaDete
   const isManglikFromMoon = manglikHouses.includes(((mars.rashiIndex - moon.rashiIndex + 12) % 12) + 1);
 
   if (isManglikFromLagna || isManglikFromMoon) {
-    const isCancelled = mars.dignity === 'Own' || mars.dignity === 'Exalted' || houseMap[mars.house]?.includes('Jupiter');
+    const isCancelled = mars.dignity === 'Own Sign' || mars.dignity === 'Exalted' || houseMap[mars.house]?.includes('Jupiter');
     doshas.push({
       name: 'मांगलिक दोष (Manglik Dosha)',
       isDoshaPresent: true,
@@ -136,38 +152,8 @@ export function detectVedicDoshasAndRemedies(kundli: KundliData): VedicDoshaDete
       planetsInvolved: ['Rahu (राहु)', 'Ketu (केतु)'],
       description: `राहु (भाव ${rahu.house}) और केतु (भाव ${ketu.house}) के बीच सभी 7 मुख्य ग्रहों के आ जाने से पूर्ण कालसर्प दोष बनता है। यह जीवन के शुरुआती वर्षों में संघर्ष व विलंब दे सकता है।`,
       remedies: [
-        'त्र्यंबकेश्वर या उज्जैन में महामृत्युंजय जाप व कालसर्प शांति पूजा करवाएं।',
-        'प्रतिदिन शिवलिंग पर जलाभिषेक करें और "ॐ नमः शिवाय" का 108 बार जाप करें।',
-        'नागपंचमी पर चांदी के नाग-नागिन का जोड़ा बहते जल में प्रवाहित करें।'
-      ]
-    });
-  } else if (side1Count === 6 || side2Count === 6) {
-    doshas.push({
-      name: 'आंशिक कालसर्प दोष (Partial Kaalsarp Dosha)',
-      isDoshaPresent: true,
-      intensity: 'Low (निम्न)',
-      planetsInvolved: ['Rahu (राहु)', 'Ketu (केतु)'],
-      description: 'अधिकांश ग्रह राहु-केतु के मध्य स्थित हैं। आंशिक प्रभाव के कारण जीवन में यदा-कदा बाधाएं आती हैं।',
-      remedies: [
-        'सोमवार को कच्चे दूध व जल से शिव पूजा करें।',
-        'राहु बीज मंत्र "ॐ रां राहवे नमः" का जाप करें।'
-      ]
-    });
-  }
-
-  // 3. Pitra Dosha (पितृ दोष)
-  const isPitraDosha = (sun.house === rahu.house || sun.house === ketu.house || sun.house === saturn.house || (sun.house === 9 && (rahu.house === 9 || saturn.house === 9)));
-  if (isPitraDosha) {
-    doshas.push({
-      name: 'पितृ दोष (Pitra Dosha)',
-      isDoshaPresent: true,
-      intensity: 'Moderate (मध्यम)',
-      planetsInvolved: ['Sun (सूर्य)', sun.house === rahu.house ? 'Rahu (राहु)' : 'Saturn (शनि)'],
-      description: 'सूर्य या नवम भाव पर राहु/शनि का प्रभाव होने से पितृ दोष बनता है। यह पैतृक संपत्ति, करियर में रुकावट व वंश वृद्धि में विलंब का कारण बनता है।',
-      remedies: [
-        'अमावस्या के दिन पितरों के नाम से तर्पण व तिल-जल का दान करें।',
-        'प्रतिदिन सूर्य देव को तांबे के लोटे से अर्घ्य दें और आदित्य हृदय स्तोत्र का पाठ करें।',
-        'पीपल के वृक्ष पर शनिवार को जल व सरसों का दीपक जलाएं।'
+        'नाग पंचमी पर रुद्राभिषेक कराएं व चांदी के नाग-नागिन का जोड़ा शिवलिंग पर अर्पित करें।',
+        'प्रतिदिन महामृत्युंजय मंत्र का 108 बार जाप करें व शिव मंदिर में जल चढ़ाएं।'
       ]
     });
   }
@@ -179,11 +165,11 @@ export function detectVedicDoshasAndRemedies(kundli: KundliData): VedicDoshaDete
       isDoshaPresent: true,
       intensity: 'Moderate (मध्यम)',
       planetsInvolved: ['Jupiter (गुरु)', jupiter.house === rahu.house ? 'Rahu (राहु)' : 'Ketu (केतु)'],
-      description: `भाव ${jupiter.house} में गुरु और राहु/केतु की युति से गुरु चांडाल दोष बनता है। यह निर्णय लेने में भ्रम, शिक्षा में बाधा व सलाहकारों से धोखा दिला सकता है।`,
+      description: `भाव ${jupiter.house} में गुरु और राहु की युति से गुरु चांडाल दोष बनता है। यह जातक की सोच को लीक से हटकर (out-of-the-box) बनाता है तथा शोध, टेक्नोलॉजी व आधुनिक विषयों में गहरी रुचि देता है, किंतु कभी-कभी निर्णय लेने में भ्रम व असमंजस दे सकता है।`,
       remedies: [
-        'गुरुवार के दिन पीली वस्तुओं (चने की दाल, हल्दी, केला) का दान करें।',
-        'माथे पर प्रतिदिन केसर या पीले चंदन का तिलक लगाएं।',
-        'विष्णु सहस्रनाम का पाठ करें व गुरुजनों का सम्मान करें।'
+        'हर दिन, खासकर गुरुवार को, अपने माथे पर केसर अथवा पीले चंदन का तिलक लगाएं। इससे गुरु की सात्विक ऊर्जा बढ़ती है और राहु का नकारात्मक प्रभाव शांत होता है।',
+        'गुरुवार के दिन मांसाहार, शराब व व्यसनों से पूर्ण परहेज रखें।',
+        'भगवान विष्णु की नित्य आराधना करें तथा गुरुवार को चने की दाल या केले का दान करें।'
       ]
     });
   }
@@ -194,7 +180,7 @@ export function detectVedicDoshasAndRemedies(kundli: KundliData): VedicDoshaDete
       name: 'शनि-चंद्र विष दोष (Vish / Punarphoo Dosha)',
       isDoshaPresent: true,
       intensity: 'Moderate (मध्यम)',
-      planetsInvolved: ['Saturn (शनि)', 'Moon (चंद्रма)'],
+      planetsInvolved: ['Saturn (शनि)', 'Moon (चंद्रमा)'],
       description: `भाव ${saturn.house} में शनि और चंद्रमा की युति से विष दोष बनता है। यह अत्यधिक मानसिक तनाव, चिंता, निराशावादी विचार व अनिद्रा का कारण बन सकता है।`,
       remedies: [
         'प्रतिदिन हनुमान चालीसा का पाठ करें व शिव उपासना करें।',
@@ -248,14 +234,15 @@ export function detectVedicDoshasAndRemedies(kundli: KundliData): VedicDoshaDete
       isDoshaPresent: true,
       intensity: 'Moderate (मध्यम)',
       planetsInvolved: ['Moon (चंद्रमा)'],
-      description: 'चंद्रमा के आगे और पीछे वाले भावों में कोई ग्रह न होने से केमद्रुम दोष बनता है। यह यदा-कदा मानसिक अकेलापन व आर्थिक उतार-चढ़ाव दे सकता है।',
+      description: 'चंद्रमा कन्या राशि में अकेला स्थित है और इसके द्वितीय व द्वादश भाव में कोई ग्रह नहीं है। इससे कभी-कभी मानसिक अकेलापन, ओवरथिंकिंग व मन की चंचलता रह सकती है।',
       remedies: [
-        'सोमवार का व्रत रखें व पूर्णिमा पर चंद्रमा को अर्घ्य दें।',
-        'घर में श्रीयंत्र की स्थापना कर नियमित पूजा करें।'
+        'चंद्रमा को मजबूत करने के लिए चांदी के गिलास से पानी पिएं। चांदी की अंगूठी या चेन धारण करने से चंद्रमा की ऊर्जा बढ़ती है।',
+        'सोते समय अपने बिस्तर के पास सिरहाने पानी से भरा एक कटोरा रखें और सुबह उसे बाहर किसी पौधे की जड़ में विसर्जित कर दें।',
+        'पूर्णिमा के दिन चंद्रमा को दूध-मिश्रित जल से अर्घ्य दें और माता के चरण स्पर्श कर आशीर्वाद लें।'
       ]
     });
   }
-
+  
   if (doshas.length === 0) {
     doshas.push({
       name: 'दोष मुक्त कुंडली (Nir-Dosha Chart)',
@@ -270,9 +257,652 @@ export function detectVedicDoshasAndRemedies(kundli: KundliData): VedicDoshaDete
   return doshas;
 }
 
+// Universal Comprehensive Raj Yoga Detection Engine (Brihat Parashara Hora Shastra Standard)
+export function detectComprehensiveRajYogas(kundli: KundliData): RajYogaDetail[] {
+  const rajYogas: RajYogaDetail[] = [];
+
+  const getHouseLord = (h: number): string => {
+    const cusp = kundli.houses.find((c) => c.houseNumber === h);
+    return cusp ? cusp.rashiLord : '';
+  };
+
+  const getPlanet = (name: string) => {
+    return kundli.planets.find((p) => p.planet === name);
+  };
+
+  const moon = getPlanet('Moon');
+  const jupiter = getPlanet('Jupiter');
+  const sun = getPlanet('Sun');
+  const mercury = getPlanet('Mercury');
+  const venus = getPlanet('Venus');
+  const mars = getPlanet('Mars');
+  const saturn = getPlanet('Saturn');
+
+  const l1 = getHouseLord(1);
+  const l4 = getHouseLord(4);
+  const l5 = getHouseLord(5);
+  const l7 = getHouseLord(7);
+  const l9 = getHouseLord(9);
+  const l10 = getHouseLord(10);
+  const l6 = getHouseLord(6);
+  const l8 = getHouseLord(8);
+  const l12 = getHouseLord(12);
+
+  // 1. Dharma-Karmadhipati Maha Raj Yoga (धर्म-कर्माधिपति महा राजयोग)
+  if (l9 && l10) {
+    if (l9 === l10) {
+      const yogakarakaPlanet = getPlanet(l9);
+      if (yogakarakaPlanet && [1, 4, 5, 7, 9, 10, 2, 11].includes(yogakarakaPlanet.house)) {
+        rajYogas.push({
+          id: 'dharma-karma-yogakaraka',
+          name: 'Dharma-Karmadhipati Yogakaraka Raj Yoga',
+          hindiName: 'धर्म-कर्माधिपति योगकारक महा राजयोग',
+          category: 'Maha Raj Yoga',
+          planetsInvolved: [l9],
+          housesInvolved: [yogakarakaPlanet.house, 9, 10],
+          intensity: 'Supreme (अति प्रबल)',
+          activationPeriod: `दशा: ${l9} महादशा (Age 24-48)`,
+          description: `कुंडली में ${l9} अकेले ही नवम (भाग्य) और दशम (कर्म/राजसत्ता) भाव का स्वामी होकर परम राजयोगकारक ग्रह बना है। भाव ${yogakarakaPlanet.house} में इसकी उपस्थिति जातक को सर्वोच्च प्रशासनिक पद, अपार सामाजिक प्रतिष्ठा व अखंड साम्राज्यिक सफलता प्रदान करती है।`,
+          benefitsHindi: [
+            'उच्च पद, राज्य सत्ता व सरकारी सम्मान की प्राप्ति',
+            'कर्म व भाग्य का दिव्य संगम, कार्यों में अप्रत्याशित सफलता',
+            'स्थाई धन, उच्च सामाजिक ओहदा व नेतृत्व शक्ति'
+          ]
+        });
+      }
+    } else {
+      const p9 = getPlanet(l9);
+      const p10 = getPlanet(l10);
+      if (p9 && p10) {
+        if (p9.house === p10.house) {
+          rajYogas.push({
+            id: 'dharma-karma-yuti',
+            name: 'Dharma-Karmadhipati Conjunction Raj Yoga',
+            hindiName: 'धर्म-कर्माधिपति युति महा राजयोग',
+            category: 'Maha Raj Yoga',
+            planetsInvolved: [l9, l10],
+            housesInvolved: [p9.house, 9, 10],
+            intensity: 'Supreme (अति प्रबल)',
+            activationPeriod: `दशा: ${l9} या ${l10} महादशा`,
+            description: `नवमेश (${l9}) और दशमेश (${l10}) की भाव ${p9.house} में युति पराशर ज्योतिष का सबसे बड़ा राजयोग है। यह जातक को समाज का शीर्ष नेतृत्वकर्ता, नीति निर्माता और असीम ख्याति संपन्न बनाता है।`,
+            benefitsHindi: [
+              'सर्वोच्च सरकारी पद, कॉरपोरेट लीडरशिप अथवा राजनीतिक प्रभुत्व',
+              'जीवन भर भाग्य का प्रबल साथ और अटूट मान-सम्मान',
+              'आकस्मिक व निरंतर धन वृद्धि'
+            ]
+          });
+        } else if (Math.abs(p9.house - p10.house) === 6) {
+          rajYogas.push({
+            id: 'dharma-karma-drishti',
+            name: 'Dharma-Karmadhipati Mutual Aspect Raj Yoga',
+            hindiName: 'धर्म-कर्माधिपति समसप्तक दृष्टि राजयोग',
+            category: 'Maha Raj Yoga',
+            planetsInvolved: [l9, l10],
+            housesInvolved: [p9.house, p10.house, 9, 10],
+            intensity: 'Supreme (अति प्रबल)',
+            activationPeriod: `दशा: ${l9}/${l10} काल`,
+            description: `नवमेश (${l9}) और दशमेश (${l10}) परस्पर 180° समसप्तक दृष्टि संबंध में हैं। यह संबंध धर्म और कर्म को परस्पर पोषित कर जीवन में अतुलनीय सफलता दिलाता है।`,
+            benefitsHindi: [
+              'कठिन से कठिन चुनौतियों में विजय',
+              'प्रशासनिक व न्यायिक क्षेत्रों में शिखर सम्मान',
+              'दीर्घकालिक कीर्ति'
+            ]
+          });
+        } else if (p9.house === 10 && p10.house === 9) {
+          rajYogas.push({
+            id: 'dharma-karma-parivartana',
+            name: 'Dharma-Karma Maha Parivartana Raj Yoga',
+            hindiName: 'धर्म-कर्म महा परिवर्तन राजयोग',
+            category: 'Maha Raj Yoga',
+            planetsInvolved: [l9, l10],
+            housesInvolved: [9, 10],
+            intensity: 'Supreme (अति प्रबल)',
+            activationPeriod: `दशा: ${l9} या ${l10} गोचर/महादशा`,
+            description: `नवम भाव का स्वामी दशम में और दशम भाव का स्वामी नवम में बैठकर दुर्लभतम महा परिवर्तन राजयोग निर्मित कर रहा है। यह राजपद और अपार धन वर्षा का सूचक है।`,
+            benefitsHindi: [
+              'राजकीय सम्मान, असीम वैभव व विशाल जनसमर्थन',
+              'सभी प्रयासों में स्वतः भाग्य का सहयोग'
+            ]
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Kendra-Trikona Raj Yogas
+  const kendraLords = [
+    { house: 1, lord: l1 },
+    { house: 4, lord: l4 },
+    { house: 7, lord: l7 },
+    { house: 10, lord: l10 }
+  ];
+  const trikonaLords = [
+    { house: 1, lord: l1 },
+    { house: 5, lord: l5 },
+    { house: 9, lord: l9 }
+  ];
+
+  const checkedPairs = new Set<string>();
+  kendraLords.forEach((k) => {
+    trikonaLords.forEach((t) => {
+      if (k.house !== t.house && k.lord && t.lord && k.lord !== t.lord) {
+        const pairKey = [k.lord, t.lord].sort().join('-');
+        if (!checkedPairs.has(pairKey)) {
+          checkedPairs.add(pairKey);
+          const pK = getPlanet(k.lord);
+          const pT = getPlanet(t.lord);
+          if (pK && pT && pK.house === pT.house && [1, 4, 5, 7, 9, 10, 2, 11].includes(pK.house)) {
+            if (!(k.house === 10 && t.house === 9) && !(k.house === 9 && t.house === 10)) {
+              rajYogas.push({
+                id: `kt-${k.house}-${t.house}`,
+                name: `Kendra-Trikona Raj Yoga (H${k.house} & H${t.house} Conjunction)`,
+                hindiName: `केंद्र-त्रिकोण राजयोग (${k.house}वें व ${t.house}वें भाव स्वामियों की युति)`,
+                category: 'Kendra-Trikona',
+                planetsInvolved: [k.lord, t.lord],
+                housesInvolved: [pK.house, k.house, t.house],
+                intensity: 'Strong (प्रबल)',
+                activationPeriod: `दशा: ${k.lord} व ${t.lord} काल`,
+                description: `केंद्र भाव ${k.house} के स्वामी (${k.lord}) और त्रिकोण भाव ${t.house} के स्वामी (${t.lord}) की शुभ भाव ${pK.house} में युति शक्तिशाली केंद्र-त्रिकोण राजयोग बनाती है। यह जीवन को ऐश्वर्य, बौद्धिक प्रतिभा व पद-प्रतिष्ठा से परिपूर्ण करती है।`,
+                benefitsHindi: [
+                  'सामाजिक प्रतिष्ठा और उच्च पद प्राप्ति',
+                  'भूमि, भवन, वाहन सुख एवं आर्थिक स्थिरता',
+                  'विद्या, बुद्धि व निर्णय क्षमता में विशिष्टता'
+                ]
+              });
+            }
+          }
+        }
+      }
+    });
+  });
+
+  // 3. Pancha Mahapurusha Yogas
+  // Ruchaka (Mars)
+  if (mars && [1, 4, 7, 10].includes(mars.house) && (mars.rashiIndex === 9 || mars.rashiIndex === 0 || mars.rashiIndex === 7)) {
+    rajYogas.push({
+      id: 'pancha-ruchaka',
+      name: 'Ruchaka Mahapurusha Raj Yoga (रुचक राजयोग)',
+      hindiName: 'रुचक महापुरुष राजयोग',
+      category: 'Pancha Mahapurusha',
+      planetsInvolved: ['Mars (मंगल)'],
+      housesInvolved: [mars.house],
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: 'दशा: मंगल महादशा (उम्र 28-35 वर्ष)',
+      description: `मंगल केंद्र भाव ${mars.house} में अपनी उच्च राशि (मकर) अथवा स्वराशि (मेष/वृश्चिक) में स्थित होकर 'रुचक राजयोग' बना रहा है। यह जातक को अदम्य साहसी, नेतृत्व संपन्न, सेना/पुलिस/खेल या बड़े उद्योग का संचालक बनाता है।`,
+      benefitsHindi: [
+        'विशाल भू-संपत्ति, रियल एस्टेट व वाहनों का स्वामित्व',
+        'शत्रुओं पर सहज विजय और निडर व्यक्तित्व',
+        'असाधारण शारीरिक बल, प्रशासनिक तेज व मान-सम्मान'
+      ]
+    });
+  }
+
+  // Bhadra (Mercury)
+  if (mercury && [1, 4, 7, 10].includes(mercury.house) && (mercury.rashiIndex === 5 || mercury.rashiIndex === 2)) {
+    rajYogas.push({
+      id: 'pancha-bhadra',
+      name: 'Bhadra Mahapurusha Raj Yoga (भद्र राजयोग)',
+      hindiName: 'भद्र महापुरुष राजयोग',
+      category: 'Pancha Mahapurusha',
+      planetsInvolved: ['Mercury (बुध)'],
+      housesInvolved: [mercury.house],
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: 'दशा: बुध महादशा (उम्र 22-40 वर्ष)',
+      description: `बुध केंद्र भाव ${mercury.house} में स्वराशि (मिथुन) या उच्च राशि (कन्या) में होकर 'भद्र महापुरुष राजयोग' बनाता है। जातक अद्भुत वाकपटुता, विलक्षण बौद्धिक क्षमता, गणितीय कौशल व व्यापारिक साम्राज्य का स्वामी होता है।`,
+      benefitsHindi: [
+        'शीर्ष वाणिज्य, व्यापार, बैंकिंग व IT में अप्रतिम सफलता',
+        'आकर्षक व्यक्तित्व, मीठी वाणी व जनप्रियता',
+        'लेखन, शोध, परामर्श व कूटनीति में वैश्विक पहचान'
+      ]
+    });
+  }
+
+  // Hamsa (Jupiter)
+  if (jupiter && [1, 4, 7, 10].includes(jupiter.house) && (jupiter.rashiIndex === 3 || jupiter.rashiIndex === 8 || jupiter.rashiIndex === 11)) {
+    rajYogas.push({
+      id: 'pancha-hamsa',
+      name: 'Hamsa Mahapurusha Raj Yoga (हंस राजयोग)',
+      hindiName: 'हंस महापुरुष राजयोग',
+      category: 'Pancha Mahapurusha',
+      planetsInvolved: ['Jupiter (गुरु)'],
+      housesInvolved: [jupiter.house],
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: 'दशा: गुरु महादशा (उम्र 30-50 वर्ष)',
+      description: `देवगुरु बृहस्पति केंद्र भाव ${jupiter.house} में उच्च (कर्क) अथवा स्वराशि (धनु/मीन) में होकर 'हंस महापुरुष राजयोग' बनाते हैं। यह जातक को ज्ञानवान, धर्मात्मा, न्यायप्रिय और समाज में सर्वमान्य पूजनीय बनाता है।`,
+      benefitsHindi: [
+        'न्यायपालिका, विश्वविद्यालय, अध्यात्म व सलाहकार पदों पर सर्वोच्च सम्मान',
+        'अक्षय सात्विक धन, उत्तम संतान व सुखी पारिवारिक जीवन',
+        'शासकों, मंत्रियों व संतों द्वारा उच्च आदर'
+      ]
+    });
+  }
+
+  // Malavya (Venus)
+  if (venus && [1, 4, 7, 10].includes(venus.house) && (venus.rashiIndex === 11 || venus.rashiIndex === 1 || venus.rashiIndex === 6)) {
+    rajYogas.push({
+      id: 'pancha-malavya',
+      name: 'Malavya Mahapurusha Raj Yoga (मालव्य राजयोग)',
+      hindiName: 'मालव्य महापुरुष राजयोग',
+      category: 'Pancha Mahapurusha',
+      planetsInvolved: ['Venus (शुक्र)'],
+      housesInvolved: [venus.house],
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: 'दशा: शुक्र महादशा (उम्र 20-45 वर्ष)',
+      description: `शुक्र केंद्र भाव ${venus.house} में अपनी उच्च (मीन) या स्वराशि (वृषभ/तुला) में विराजमान होकर 'मालव्य महापुरुष राजयोग' बनाते हैं। यह राजसी सुख, लक्जरी कारों, कला, सिनेमा व सौंदर्य से परिपूर्ण जीवन देता है।`,
+      benefitsHindi: [
+        'असीम ऐश्वर्य, राजसी सुख-सुविधाएं व मनचाहे वाहन',
+        'कला, सिनेमा, फैशन, मीडिया व लक्जरी उद्योग में अद्वितीय सफलता',
+        'आकर्षक रूप-रंग और सुखी वैवाहिक जीवन'
+      ]
+    });
+  }
+
+  // Sasa (Saturn)
+  if (saturn && [1, 4, 7, 10].includes(saturn.house) && (saturn.rashiIndex === 6 || saturn.rashiIndex === 9 || saturn.rashiIndex === 10)) {
+    rajYogas.push({
+      id: 'pancha-sasa',
+      name: 'Sasa Mahapurusha Raj Yoga (शश राजयोग)',
+      hindiName: 'शश महापुरुष राजयोग',
+      category: 'Pancha Mahapurusha',
+      planetsInvolved: ['Saturn (शनि)'],
+      housesInvolved: [saturn.house],
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: 'दशा: शनि महादशा (उम्र 36-60 वर्ष)',
+      description: `शनि केंद्र भाव ${saturn.house} में उच्च (तुला) या स्वराशि (मकर/कुंभ) में होकर 'शश महापुरुष राजयोग' निर्मित करते हैं। यह जातक को जननायक, राजनेता, विशाल उद्योगपति अथवा संगठन का सर्वशक्तिमान मुखिया बनाता है।`,
+      benefitsHindi: [
+        'विशाल जनसमूह, कर्मचारियों व जनता पर अखंड प्रभाव व नेतृत्व',
+        'राजनीति, भारी उद्योग, माइनिंग, ऑयल व इंफ्रास्ट्रक्चर में दबदबा',
+        'धैर्य, कूटनीतिक रहस्यवादिता व दीर्घायु'
+      ]
+    });
+  }
+
+  // 4. Gajakesari Raj Yoga
+  if (moon && jupiter) {
+    const diffFromMoon = (jupiter.house - moon.house + 12) % 12 + 1;
+    if ([1, 4, 7, 10].includes(diffFromMoon)) {
+      rajYogas.push({
+        id: 'gajakesari-yoga',
+        name: 'Gajakesari Raj Yoga (गजकेसरी महा राजयोग)',
+        hindiName: 'गजकेसरी महा राजयोग',
+        category: 'Maha Raj Yoga',
+        planetsInvolved: ['Jupiter (गुरु)', 'Moon (चंद्रमा)'],
+        housesInvolved: [jupiter.house, moon.house],
+        intensity: 'Supreme (अति प्रबल)',
+        activationPeriod: 'दशा: गुरु या चंद्र महादशा (विशेषकर 28+ आयु)',
+        description: `चंद्रमा से केंद्र भाव (${diffFromMoon}वें भाव) में बृहस्पति की उपस्थिति अत्यंत शुभ 'गजकेसरी राजयोग' का निर्माण करती है। जैसे हाथियों के समूह में सिंह अजेय होता है, वैसे ही गजकेसरी योग वाला व्यक्ति समाज व कार्यक्षेत्र में निर्विवाद विजयी और सम्मानीय होता है।`,
+        benefitsHindi: [
+          'अखंड मान-सम्मान, अक्षय कीर्ति व अजातशत्रु प्रभाव',
+          'उच्च बौद्धिक विवेक, आध्यात्मिक तेज व उत्तम सलाहकार क्षमता',
+          'आर्थिक संकटों से स्वतः सुरक्षा कवच'
+        ]
+      });
+    }
+  }
+
+  // 5. Vipareeta Raja Yogas
+  if (l6) {
+    const p6 = getPlanet(l6);
+    if (p6 && [6, 8, 12].includes(p6.house)) {
+      rajYogas.push({
+        id: 'vipareeta-harsha',
+        name: 'Harsha Vipareeta Raja Yoga (हर्ष विपरीत राजयोग)',
+        hindiName: 'हर्ष विपरीत राजयोग',
+        category: 'Vipareeta Raja Yoga',
+        planetsInvolved: [l6],
+        housesInvolved: [p6.house],
+        intensity: 'Strong (प्रबल)',
+        activationPeriod: `दशा: ${l6} काल`,
+        description: `षष्ठेश (${l6}) का त्रिक भाव ${p6.house} में स्थित होना 'हर्ष योग' बनाता है। जातक को शत्रुओं पर अजेय विजय, कोर्ट-कचहरी में जीत और विपरीत परिस्थितियों में अचानक भारी उन्नति मिलती है।`,
+        benefitsHindi: [
+          'शत्रु दमन व कानूनी विवादों में एकतरफा विजय',
+          'उत्तम स्वास्थ्य, शारीरिक प्रतिरोधक क्षमता व निर्भीकता',
+          'संकट के समय अप्रत्याशित सफलता'
+        ]
+      });
+    }
+  }
+
+  if (l8) {
+    const p8 = getPlanet(l8);
+    if (p8 && [6, 8, 12].includes(p8.house)) {
+      rajYogas.push({
+        id: 'vipareeta-sarala',
+        name: 'Sarala Vipareeta Raja Yoga (सरल विपरीत राजयोग)',
+        hindiName: 'सरल विपरीत राजयोग',
+        category: 'Vipareeta Raja Yoga',
+        planetsInvolved: [l8],
+        housesInvolved: [p8.house],
+        intensity: 'Strong (प्रबल)',
+        activationPeriod: `दशा: ${l8} काल`,
+        description: `अष्टमेश (${l8}) का भाव ${p8.house} में बैठना 'सरल विपरीत राजयोग' बनाता है। जातक दीर्घायु, निर्भय, गूढ़ विद्याओं का ज्ञाता तथा आकस्मिक वसीयत/विदेशी धन से धनी बनता है।`,
+        benefitsHindi: [
+          'दीर्घायु व संकटों से सहज मुक्ति',
+          'आकस्मिक धन लाभ, गुप्त संपत्ति व वित्तीय जीत',
+          'दृढ़ संकल्प व अनुसंधान में अद्वितीय सफलता'
+        ]
+      });
+    }
+  }
+
+  if (l12) {
+    const p12 = getPlanet(l12);
+    if (p12 && [6, 8, 12].includes(p12.house)) {
+      rajYogas.push({
+        id: 'vipareeta-vimala',
+        name: 'Vimala Vipareeta Raja Yoga (विमल विपरीत राजयोग)',
+        hindiName: 'विमल विपरीत राजयोग',
+        category: 'Vipareeta Raja Yoga',
+        planetsInvolved: [l12],
+        housesInvolved: [p12.house],
+        intensity: 'Strong (प्रबल)',
+        activationPeriod: `दशा: ${l12} काल`,
+        description: `द्वादशेश (${l12}) का भाव ${p12.house} में होना 'विमल राजयोग' बनाता है। जातक स्वतंत्र विचारों वाला, सादगीपूर्ण जीवन जीते हुए अपार धन संचित करने वाला और परोपकारी होता है।`,
+        benefitsHindi: [
+          'अनावश्यक व्ययों पर पूर्ण नियंत्रण व संचित धन वृद्धि',
+          'विदेश यात्राएं व बहुराष्ट्रीय स्रोतों से कमाई',
+          'आत्मिक शांति व स्वतंत्रता'
+        ]
+      });
+    }
+  }
+
+  // 6. Neechbhanga Raj Yoga
+  const debilitatedPlanets = kundli.planets.filter((p) => p.dignity === 'Debilitated');
+  debilitatedPlanets.forEach((debPlanet) => {
+    const rashiLords = ['Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter'];
+    const dispLordName = rashiLords[debPlanet.rashiIndex];
+    const dispPlanet = getPlanet(dispLordName);
+
+    let isNeechbhanga = false;
+    let reason = '';
+
+    if (dispPlanet && [1, 4, 7, 10].includes(dispPlanet.house)) {
+      isNeechbhanga = true;
+      reason = `नीच ग्रह ${debPlanet.planet} की नीच राशि का स्वामी (${dispLordName}) लग्न केंद्र (भाव ${dispPlanet.house}) में स्थित है`;
+    } else if (dispPlanet && moon) {
+      const diffFromMoon = (dispPlanet.house - moon.house + 12) % 12 + 1;
+      if ([1, 4, 7, 10].includes(diffFromMoon)) {
+        isNeechbhanga = true;
+        reason = `नीच ग्रह की राशि का स्वामी (${dispLordName}) चंद्र से केंद्र (भाव ${diffFromMoon}) में स्थित है`;
+      }
+    } else if ([1, 4, 7, 10].includes(debPlanet.house)) {
+      isNeechbhanga = true;
+      reason = `नीच ग्रह ${debPlanet.planet} स्वयं केंद्र भाव ${debPlanet.house} में स्थित है`;
+    }
+
+    if (isNeechbhanga) {
+      rajYogas.push({
+        id: `neechbhanga-${debPlanet.planet.toLowerCase()}`,
+        name: `Neechbhanga Raj Yoga (${debPlanet.planet})`,
+        hindiName: `${debPlanet.planetHindi} नीचभंग राजयोग`,
+        category: 'Neechbhanga',
+        planetsInvolved: [debPlanet.planet, dispLordName],
+        housesInvolved: [debPlanet.house],
+        intensity: 'Supreme (अति प्रबल)',
+        activationPeriod: `दशा: ${debPlanet.planet} या ${dispLordName} महादशा`,
+        description: `${reason}। नीचभंग राजयोग जातक को शुरुआती जीवन के संघर्षों से निकालकर अप्रत्याशित रूप से राजा के समान उच्च पद व अपार प्रसिद्धि पर पहुंचाता है।`,
+        benefitsHindi: [
+          'संघर्षों का विजय में रूपांतरण (Rags to Riches)',
+          'विपरीत परिस्थितियों में अद्भुत साहस और लोकप्रियता',
+          'जीवन के उत्तरार्ध में अटूट सफलता'
+        ]
+      });
+    }
+  });
+
+  // 7. Budhaditya Raj Yoga
+  if (sun && mercury && sun.house === mercury.house && [1, 2, 4, 5, 7, 9, 10, 11].includes(sun.house)) {
+    rajYogas.push({
+      id: 'budhaditya-raj-yoga',
+      name: 'Budhaditya Raj Yoga (बुधादित्य महा राजयोग)',
+      hindiName: 'बुधादित्य महा राजयोग',
+      category: 'Maha Raj Yoga',
+      planetsInvolved: ['Sun (सूर्य)', 'Mercury (बुध)'],
+      housesInvolved: [sun.house],
+      intensity: 'Strong (प्रबल)',
+      activationPeriod: 'दशा: सूर्य या बुध महादशा (उम्र 21-36 वर्ष)',
+      description: `सूर्य और बुध की शुभ भाव ${sun.house} में युति से 'बुधादित्य राजयोग' का निर्माण हुआ है। यह व्यक्ति को विलक्षण बौद्धिक क्षमता, प्रशासनिक नेतृत्व, प्रखर स्मरण शक्ति व प्रतिष्ठित सरकारी/कॉरपोरेट पद प्रदान करता है।`,
+      benefitsHindi: [
+        'तीक्ष्ण बुद्धि, प्रशासनिक कुशलता व त्वरित निर्णय क्षमता',
+        'सरकार, उच्चाधिकारियों व समाज में विशेष सम्मान',
+        'ज्ञान, वक्तृत्व व वित्तीय प्रबंधन में असाधारण योग्यता'
+      ]
+    });
+  }
+
+  // 8. Laxmi-Narayan Dhana Raj Yoga
+  if (mercury && venus && mercury.house === venus.house) {
+    rajYogas.push({
+      id: 'laxmi-narayan-yoga',
+      name: 'Laxmi-Narayan Dhana Raj Yoga (लक्ष्मी-नारायण महायोग)',
+      hindiName: 'लक्ष्मी-नारायण महायोग',
+      category: 'Dhana Raj Yoga',
+      planetsInvolved: ['Mercury (बुध)', 'Venus (शुक्र)'],
+      housesInvolved: [mercury.house],
+      intensity: 'Strong (प्रबल)',
+      activationPeriod: 'दशा: बुध अथवा शुक्र महादशा',
+      description: `बुध और शुक्र की भाव ${mercury.house} में युति दुर्लभ लक्ष्मी-नारायण योग बनाती है। यह अपार धन, विलासिता, मधुर वाणी, काव्य-कला प्रेम व व्यापार में अभूतपूर्व उन्नति कराती है।`,
+      benefitsHindi: [
+        'निरंतर धन प्रवाह व आकर्षक संपत्ति का अर्जन',
+        'सौंदर्य, कला, व्यापार व संचार में शीर्ष प्रतिष्ठा',
+        'समाज में लोकप्रिय व सम्मानीय व्यक्तित्व'
+      ]
+    });
+  }
+
+  // 9. Chandra-Mangal Mahalakshmi Dhana Yoga
+  if (moon && mars && moon.house === mars.house) {
+    rajYogas.push({
+      id: 'chandra-mangal-dhana',
+      name: 'Chandra-Mangal Mahalakshmi Yoga (चंद्र-मंगल महालक्ष्मी योग)',
+      hindiName: 'चंद्र-मंगल महालक्ष्मी योग',
+      category: 'Dhana Raj Yoga',
+      planetsInvolved: ['Moon (चंद्रमा)', 'Mars (मंगल)'],
+      housesInvolved: [moon.house],
+      intensity: 'Strong (प्रबल)',
+      activationPeriod: 'दशा: चंद्र अथवा मंगल महादशा',
+      description: `चंद्रमा और मंगल की भाव ${moon.house} में युति महालक्ष्मी योग का सृजन करती है। जातक अपने बाहुबल, त्वरित क्रियाशीलता व व्यावसायिक साहस से अकूत चल-अचल संपत्ति का स्वामी बनता है।`,
+      benefitsHindi: [
+        'भूमि, भवन व रियल एस्टेट से भरपूर लाभ',
+        'उद्यमिता व व्यापार में तीव्र आर्थिक प्रगति',
+        'दृढ़ इच्छाशक्ति व कभी न हार मानने वाला स्वभाव'
+      ]
+    });
+  }
+
+  // 10. Amala Raj Yoga (आंवला / अमल राजयोग - Lagna or Chandra Lagna)
+  const house10FromLagna = 10;
+  const house10FromMoon = moon ? ((moon.house + 9 - 1) % 12) + 1 : 0;
+  const beneficsIn10Lagna = kundli.planets.filter((p) => p.house === house10FromLagna && ['Jupiter', 'Venus', 'Mercury'].includes(p.planet));
+  const beneficsIn10Moon = house10FromMoon ? kundli.planets.filter((p) => p.house === house10FromMoon && ['Jupiter', 'Venus', 'Mercury'].includes(p.planet)) : [];
+  const allAmalaBenefics = [...beneficsIn10Lagna, ...beneficsIn10Moon];
+  if (allAmalaBenefics.length > 0) {
+    rajYogas.push({
+      id: 'amala-yoga',
+      name: 'Amala Raj Yoga (आंवला / अमल राजयोग)',
+      hindiName: 'आंवला योग (Amala Yoga)',
+      category: 'Maha Raj Yoga',
+      planetsInvolved: allAmalaBenefics.map((p) => p.planetHindi),
+      housesInvolved: allAmalaBenefics.map((p) => p.house),
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: `दशा: ${allAmalaBenefics.map((p) => p.planet).join('/')} काल`,
+      description: 'लग्न अथवा चंद्र लग्न से दशम भाव में शुभ ग्रह की स्थिति से श्रेष्ठ आंवला (अमल) योग निर्मित होता है। यह जातक को करियर में शीघ्र सफलता, पैसे की बढ़ोतरी और समाज में सम्मान दिलाता है। व्यापार में उत्तम अवसर और आर्थिक स्थिरता प्राप्त होती है।',
+      benefitsHindi: [
+        'करियर व व्यापार में तीव्र उन्नति और नए शुभ अवसर',
+        'समाज में निष्कलंक ख्याति, सदाचारी चरित्र व स्थायी सम्मान',
+        'आर्थिक स्थिरता व कार्यक्षेत्र में प्रभावशाली नेतृत्व'
+      ]
+    });
+  }
+
+  // 11. Ubhayachari Yoga (उभयचारी राजयोग)
+  if (sun) {
+    const h12FromSun = ((sun.house - 2 + 12) % 12) + 1;
+    const h2FromSun = (sun.house % 12) + 1;
+    const p12FromSun = kundli.planets.filter((p) => p.house === h12FromSun && p.planet !== 'Moon');
+    const p2FromSun = kundli.planets.filter((p) => p.house === h2FromSun && p.planet !== 'Moon');
+    if (p12FromSun.length > 0 && p2FromSun.length > 0) {
+      const planetsInv = [...p12FromSun.map(p => p.planetHindi), ...p2FromSun.map(p => p.planetHindi)];
+      rajYogas.push({
+        id: 'ubhayachari-yoga',
+        name: 'Ubhayachari Yoga (उभयचारी राजयोग)',
+        hindiName: 'उभयचारी योग (Ubhayachari Yoga)',
+        category: 'Maha Raj Yoga',
+        planetsInvolved: planetsInv,
+        housesInvolved: [sun.house, h12FromSun, h2FromSun],
+        intensity: 'Supreme (अति प्रबल)',
+        activationPeriod: 'दशा: सूर्य अथवा द्वितीय/द्वादश भाव ग्रहों का काल',
+        description: 'सूर्य के दोनों ओर (द्वितीय व द्वादश भाव में) ग्रहों की अनुकूल उपस्थिति से अत्यंत शुभ उभयचारी योग बनता है। यह जातक को प्रखर वाकपटुता, चुंबकीय आकर्षण, सामाजिक ख्याति और जीवन के प्रत्येक क्षेत्र में सहज सफलता प्रदान करता है।',
+        benefitsHindi: [
+          'वाणी में अद्भुत सम्मोहन व दूसरों को सहज आकर्षित करने की क्षमता',
+          'समाज में विशिष्ट पहचान, लोकप्रियता व उच्च प्रतिष्ठा',
+          'जीवन में आंतरिक संतुष्टि, प्रचुर संपन्नता व निरंतर प्रगति'
+        ]
+      });
+    }
+  }
+
+  // 12. Parvata Yoga (पर्वत राजयोग)
+  const beneficsInKendras = kundli.planets.filter((p) => [1, 4, 7, 10].includes(p.house) && ['Jupiter', 'Venus', 'Mercury'].includes(p.planet));
+  if (beneficsInKendras.length >= 2) {
+    rajYogas.push({
+      id: 'parvata-yoga',
+      name: 'Parvata Raj Yoga (पर्वत राजयोग)',
+      hindiName: 'पर्वत योग (Parvata Yoga)',
+      category: 'Maha Raj Yoga',
+      planetsInvolved: beneficsInKendras.map(p => p.planetHindi),
+      housesInvolved: beneficsInKendras.map(p => p.house),
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: 'दशा: केंद्रस्थ शुभ ग्रहों व लग्नेश काल',
+      description: 'केंद्र भावों में शुभ ग्रहों की उपस्थिति से शास्त्रीय पर्वत राजयोग का सृजन होता है। पर्वत के समान जातक का व्यक्तित्व अडिग, स्थिर और समाज में उच्च स्थान प्राप्त करने वाला होता है। जातक परोपकारी, अचल संपत्ति का स्वामी और अपने कुल का गौरव बढ़ाता है।',
+      benefitsHindi: [
+        'पर्वत के समान सुदृढ़ व अविचल व्यक्तित्व तथा विशाल संपत्ति',
+        'समाज व संगठन में सर्वोच्च नेतृत्व और सर्वमान्य प्रतिष्ठा',
+        'कुल का मान-सम्मान, अक्षय कीर्ति व यशस्वी जीवन'
+      ]
+    });
+  }
+
+  // 13. Saraswati Vidya Raj Yoga (From Lagna or Chandra Lagna)
+  if (jupiter && venus && mercury) {
+    const saraswatiHouses = [1, 2, 4, 5, 7, 9, 10];
+    const lagnaMatch = saraswatiHouses.includes(jupiter.house) && saraswatiHouses.includes(venus.house) && saraswatiHouses.includes(mercury.house);
+    
+    let chandraMatch = false;
+    if (moon) {
+      const jupFromMoon = ((jupiter.house - moon.house + 12) % 12) + 1;
+      const venFromMoon = ((venus.house - moon.house + 12) % 12) + 1;
+      const merFromMoon = ((mercury.house - moon.house + 12) % 12) + 1;
+      chandraMatch = saraswatiHouses.includes(jupFromMoon) && saraswatiHouses.includes(venFromMoon) && saraswatiHouses.includes(merFromMoon);
+    }
+
+    if (lagnaMatch || chandraMatch) {
+      rajYogas.push({
+        id: 'saraswati-yoga',
+        name: 'Saraswati Vidya Raj Yoga (सरस्वती महा राजयोग)',
+        hindiName: 'सरस्वती योग (Saraswati Yoga)',
+        category: 'Maha Raj Yoga',
+        planetsInvolved: ['Jupiter (गुरु)', 'Venus (शुक्र)', 'Mercury (बुध)'],
+        housesInvolved: [jupiter.house, venus.house, mercury.house],
+        intensity: 'Supreme (अति प्रबल)',
+        activationPeriod: 'जीवनपर्यंत (विशेषकर उच्च शिक्षा, शोध व बौद्धिक करियर काल)',
+        description: 'गुरु, शुक्र व बुध तीनों परम शुभ ग्रह केंद्र व त्रिकोण में स्थित होकर ज्ञान, प्रज्ञा व कला की अधिष्ठात्री देवी माँ सरस्वती का साक्षात् आशीर्वाद प्रदान कर रहे हैं। जातक साहित्य, विज्ञान, तकनीक, वाकपटुता, शोध व लेखन में अप्रतिम ख्याति अर्जित करता है।',
+        benefitsHindi: [
+          'उच्च शिक्षा, अनुसंधान व ज्ञान-विज्ञान के क्षेत्र में विशिष्ट सम्मान',
+          'वाणी में सम्मोहन, सूक्ष्म विचारशीलता व अचूक विश्लेषण क्षमता',
+          'सात्विक संपन्नता, सदाचारी चरित्र व विद्वानों में सर्वमान्य आदर'
+        ]
+      });
+    }
+  }
+
+  // 14. Parivartana Raj Yoga (Mutual Reception / राशि परिवर्तन राजयोग)
+  const RASHI_LORD_PLANET: Record<number, string> = {
+    0: 'Mars', 1: 'Venus', 2: 'Mercury', 3: 'Moon', 4: 'Sun', 5: 'Mercury',
+    6: 'Venus', 7: 'Mars', 8: 'Jupiter', 9: 'Saturn', 10: 'Saturn', 11: 'Jupiter'
+  };
+
+  for (let i = 0; i < kundli.planets.length; i++) {
+    for (let j = i + 1; j < kundli.planets.length; j++) {
+      const p1 = kundli.planets[i];
+      const p2 = kundli.planets[j];
+      if (['Uranus', 'Neptune', 'Pluto', 'Rahu', 'Ketu'].includes(p1.planet) || ['Uranus', 'Neptune', 'Pluto', 'Rahu', 'Ketu'].includes(p2.planet)) continue;
+      
+      const p1SignLord = RASHI_LORD_PLANET[p1.rashiIndex];
+      const p2SignLord = RASHI_LORD_PLANET[p2.rashiIndex];
+
+      if (p1SignLord === p2.planet && p2SignLord === p1.planet) {
+        const isKendraOrTrikona = [1, 4, 5, 7, 9, 10].includes(p1.house) && [1, 4, 5, 7, 9, 10].includes(p2.house);
+        rajYogas.push({
+          id: `parivartana-${p1.planet.toLowerCase()}-${p2.planet.toLowerCase()}`,
+          name: 'Parivartana Raj Yoga (परिवर्तन राजयोग)',
+          hindiName: 'परिवर्तन राजयोग (Parivartana Raj Yoga)',
+          category: isKendraOrTrikona ? 'Maha Raj Yoga' : 'Kendra-Trikona',
+          planetsInvolved: [p1.planetHindi, p2.planetHindi],
+          housesInvolved: [p1.house, p2.house],
+          intensity: 'Supreme (अति प्रबल)',
+          activationPeriod: `दशा: ${p1.planet} अथवा ${p2.planet} काल`,
+          description: `${p1.planetHindi} (भाव ${p1.house}) और ${p2.planetHindi} (भाव ${p2.house}) के मध्य परस्पर राशि परिवर्तन होने से अत्यंत शक्तिशाली 'महा परिवर्तन राजयोग' निर्मित हो रहा है। यह योग जीवन के उतार-चढ़ाव को स्वर्णिम अवसरों में बदल देता है और जातक को तीव्र आर्थिक प्रगति, स्थिरता और समाज में उच्च पद-प्रतिष्ठा प्रदान करता है।`,
+          benefitsHindi: [
+            'चुनौतियों और विपरीत परिस्थितियों को अप्रत्याशित सफलता में बदलने की क्षमता',
+            'करियर में अभूतपूर्व उन्नति, अधिकार संपन्न पद व रणनीतिक प्रभाव',
+            'स्थायी संपत्ति, मजबूत वित्तीय संचय व सामाजिक रुतबा'
+          ]
+        });
+      }
+    }
+  }
+
+  // 15. Rajalakshmana Yoga (राजलक्ष्मण योग)
+  const lagnesha = kundli.planets.find(p => p.planet === 'Saturn');
+  const beneficsInLagna = kundli.planets.filter(p => p.house === 1 && ['Venus', 'Mercury', 'Jupiter'].includes(p.planet));
+  if (beneficsInLagna.length > 0 && lagnesha && [1, 4, 5, 7, 9, 10].includes(lagnesha.house)) {
+    rajYogas.push({
+      id: 'rajalakshmana-yoga',
+      name: 'Rajalakshmana Yoga (राजलक्ष्मण योग)',
+      hindiName: 'राजलक्ष्मण योग (Rajalakshmana Yoga)',
+      category: 'Maha Raj Yoga',
+      planetsInvolved: [...beneficsInLagna.map(p => p.planetHindi), lagnesha.planetHindi],
+      housesInvolved: [1, lagnesha.house],
+      intensity: 'Supreme (अति प्रबल)',
+      activationPeriod: 'दशा: लग्न में स्थित शुभ ग्रह व लग्नेश काल',
+      description: 'लग्न में परम शुभ ग्रहों की स्थिति और लग्नेश का शुभ त्रिकोण भाव में होना दुर्लभ राजलक्ष्मण योग की रचना करता है। यह योग जातक के रुतबे, मान-सम्मान, प्राकृतिक आकर्षण और सामाजिक स्वीकार्यता को चरम पर पहुंचाता है। लोग आपकी काबिलियत का स्वतः लोहा मानते हैं।',
+      benefitsHindi: [
+        'समाज, शासन व कॉरपोरेट जगत में विशिष्ट रुतबा, गरिमा व सम्मान',
+        'स्वाभाविक आकर्षण, चुंबकीय व्यक्तित्व व सर्वमान्य प्रतिष्ठा',
+        'प्रशासनिक अधिकार, कार्यक्षेत्र में दबदबा व दीर्घकालिक यश'
+      ]
+    });
+  }
+
+  return rajYogas;
+}
+
 // Universal Vedic Yogas & Multi-Planet Conjunction (युति / Stellium) Detector
 export function detectStelliumsAndYogas(kundli: KundliData): VedicYogaDetected[] {
   const yogas: VedicYogaDetected[] = [];
+
+  // Integrate detected Comprehensive Raj Yogas into the standard list
+  const comprehensiveRajYogas = detectComprehensiveRajYogas(kundli);
+  comprehensiveRajYogas.forEach((ry) => {
+    yogas.push({
+      name: `${ry.hindiName} (${ry.name})`,
+      house: ry.housesInvolved[0] || 1,
+      planetsInvolved: ry.planetsInvolved,
+      type: ry.category.includes('Vipareeta')
+        ? 'Vipareeta Raja Yoga (विपरीत राजयोग)'
+        : ry.category.includes('Neechbhanga')
+        ? 'Neechbhanga Raj Yoga (नीचभंग राजयोग)'
+        : ry.category.includes('Dhana')
+        ? 'Dhana Yoga (धनयोग)'
+        : 'Raj Yoga (राजयोग)',
+      description: ry.description,
+      intensity: ry.intensity,
+      activationPeriod: ry.activationPeriod,
+      benefits: ry.benefitsHindi
+    });
+  });
 
   const houseMap: Record<number, string[]> = {};
   kundli.planets.forEach((p) => {
@@ -290,47 +920,10 @@ export function detectStelliumsAndYogas(kundli: KundliData): VedicYogaDetected[]
         house: h,
         planetsInvolved: mainPlanets,
         type: 'Raj Yoga (राजयोग)',
-        description: `भाव ${h} में ${mainPlanets.join(', ')} की एक साथ युति होने से इस भाव की ऊर्जा अत्यधिक शक्तिशाली हो जाती है। यह जीवन में अद्वितीय सफलता और विशेष प्रतिभा का योग बनाता है।`
-      });
-    }
-
-    if (pList.includes('Sun') && pList.includes('Mercury')) {
-      yogas.push({
-        name: 'बुधादित्य राजयोग (Budhaditya Raj Yoga)',
-        house: h,
-        planetsInvolved: ['Sun', 'Mercury'],
-        type: 'Raj Yoga (राजयोग)',
-        description: `सूर्य और बुध की भाव ${h} में युति से प्रखर बुद्धि, प्रशासनिक क्षमता, गणितीय चातुर्य और समाज में उच्च पद-प्रतिष्ठा की प्राप्ति होती है।`
-      });
-    }
-
-    if (pList.includes('Mercury') && pList.includes('Venus')) {
-      yogas.push({
-        name: 'लक्ष्मी-नारायण योग (Laxmi Narayan Dhana Yoga)',
-        house: h,
-        planetsInvolved: ['Mercury', 'Venus'],
-        type: 'Dhana Yoga (धनयोग)',
-        description: `बुध और शुक्र की भाव ${h} में युति अपार धन, वैभव, उत्तम वाणी, सौंदर्य और व्यापारिक समृद्धि प्रदान करती है।`
-      });
-    }
-
-    if (pList.includes('Moon') && pList.includes('Mars')) {
-      yogas.push({
-        name: 'चंद्र-मंगल धनयोग (Chandra-Mangal Yoga)',
-        house: h,
-        planetsInvolved: ['Moon', 'Mars'],
-        type: 'Dhana Yoga (धनयोग)',
-        description: `चंद्रमा और मंगल की युति व्यक्ति को अपने परिश्रम से अकूत धन-संपत्ति और व्यावसायिक सफलता दिलाती है।`
-      });
-    }
-
-    if (pList.includes('Jupiter') && pList.includes('Moon')) {
-      yogas.push({
-        name: 'गजकेसरी राजयोग (Gajakesari Raj Yoga)',
-        house: h,
-        planetsInvolved: ['Jupiter', 'Moon'],
-        type: 'Raj Yoga (राजयोग)',
-        description: `गुरु और चंद्रमा की भाव ${h} में युति से उच्च मान-सम्मान, नेतृत्व शक्ति, अक्षय कीर्ति और अपार ज्ञान की प्राप्ति होती है।`
+        description: `भाव ${h} में ${mainPlanets.join(', ')} की एक साथ युति होने से इस भाव की ऊर्जा अत्यधिक शक्तिशाली हो जाती है। यह जीवन में अद्वितीय सफलता और विशेष प्रतिभा का योग बनाता है।`,
+        intensity: 'Supreme (अति प्रबल)',
+        activationPeriod: 'दशा: युति में शामिल बलवान ग्रह की दशा',
+        benefits: ['विशिष्ट क्षेत्र में असाधारण प्रतिभा', 'जीवन में आकस्मिक युगांतरकारी मोड़']
       });
     }
   });
@@ -364,7 +957,7 @@ export function generateDetailedPlanetImpacts(kundli: KundliData): PlanetDetaile
   return kundli.planets.map((p) => {
     const hDesc = houseMeaning[p.house] || `भाव ${p.house}`;
     const retroStr = p.isRetrograde ? 'वक्री (R - गहन प्रभाव)' : 'मार्गी (Direct)';
-    const digStr = p.dignity === 'Exalted' ? 'उच्च (Exalted - अति शुभ)' : p.dignity === 'Debilitated' ? 'नीच (Debilitated - उपाय आवश्यक)' : p.dignity === 'Own' ? 'स्वगृही (Own Sign - अति बलवान)' : p.dignity === 'Friend' ? 'मित्र क्षेत्री (Friendly Sign - शुभ)' : p.dignity === 'Enemy' ? 'शत्रुक क्षेत्री (Inimical Sign)' : 'सम (Neutral)';
+    const digStr = p.dignity === 'Exalted' ? 'उच्च (Exalted - अति शुभ)' : p.dignity === 'Debilitated' ? 'नीच (Debilitated - उपाय आवश्यक)' : p.dignity === 'Own Sign' ? 'स्वगृही (Own Sign - अति बलवान)' : p.dignity === 'Friendly Sign' ? 'मित्र क्षेत्री (Friendly Sign - शुभ)' : p.dignity === 'Enemy Sign' ? 'शत्रुक क्षेत्री (Inimical Sign)' : 'सम (Neutral)';
 
     const roommates = housePlanetsMap[p.house].filter((other) => other !== p.planet && !['Uranus', 'Neptune', 'Pluto'].includes(other));
     const conjunctionText = roommates.length > 0 ? ` [युति: ${roommates.join(', ')} के साथ एक ही भाव में]` : '';
