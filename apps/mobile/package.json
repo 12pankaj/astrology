@@ -9,9 +9,9 @@
     "ios": "expo start --ios"
   },
   "dependencies": {
-    "@vedic-astro/astrology-engine": "*",
-    "@vedic-astro/config": "*",
-    "@vedic-astro/types": "*",
+    "@vedic-astro/astrology-engine": "workspace:*",
+    "@vedic-astro/config": "workspace:*",
+    "@vedic-astro/types": "workspace:*",
     "expo": "~50.0.0",
     "react": "18.2.0",
     "react-native": "0.73.4"
